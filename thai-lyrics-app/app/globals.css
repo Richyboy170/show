@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Thai font support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+
+.thai-text {
+  font-family: 'Noto Sans Thai', sans-serif;
+}
+
+/* Lyrics scrolling animation */
+.lyric-line {
+  transition: all 0.3s ease-in-out;
+}
+
+.lyric-line.active {
+  @apply text-pink-600 font-bold scale-110;
+}
+
+.lyric-line.past {
+  @apply text-gray-400;
+}
+
+.lyric-line.future {
+  @apply text-gray-600;
+}
