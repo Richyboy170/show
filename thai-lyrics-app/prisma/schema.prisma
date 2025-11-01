@@ -1,0 +1,106 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  googleId      String?   @unique
+  password      String    // Special admin password (hashed)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  videos        Video[]
+  notifications Notification[]
+}
+
+model Video {
+  id              String    @id @default(cuid())
+  youtubeId       String    @unique
+  title           String
+  description     String?
+  thumbnailUrl    String?
+  publishedAt     DateTime?
+  duration        Int?      // in seconds
+  channelTitle    String?
+
+  // Lyrics data
+  lyrics          Lyric[]
+
+  // Admin who added/manages this video
+  adminId         String
+  admin           Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([adminId])
+}
+
+model Lyric {
+  id          String    @id @default(cuid())
+  videoId     String
+  video       Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  // Thai lyrics
+  thaiText    String
+
+  // English translation (optional)
+  translation String?
+
+  // Timing in seconds (start and end time)
+  startTime   Float
+  endTime     Float
+
+  // Line order
+  order       Int
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([videoId])
+  @@index([startTime])
+}
+
+model ChannelMonitor {
+  id                  String    @id @default(cuid())
+  channelId           String    @unique // YouTube channel ID
+  channelHandle       String?   // @josietso
+  channelTitle        String?
+  lastChecked         DateTime?
+  lastVideoId         String?   // Last known video ID
+  lastVideoPublishedAt DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  adminId     String
+  admin       Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  type        String    // "NEW_VIDEO", "VIDEO_UPDATED", "VIDEO_DELETED"
+  title       String
+  message     String
+  youtubeId   String?
+
+  isRead      Boolean   @default(false)
+  isApproved  Boolean?  // null = pending, true = approved, false = rejected
+
+  // Metadata for the change
+  metadata    String?   // JSON string with additional data
+
+  createdAt   DateTime  @default(now())
+
+  @@index([adminId, isRead])
+}
