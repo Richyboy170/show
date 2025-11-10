@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import YouTube, { YouTubeProps } from "react-youtube";
-import { ArrowLeft, Plus, Save, Trash2, Play, Pause } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Play, Pause, Sparkles, Music } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 
@@ -119,14 +119,24 @@ export default function VideoEditor({ video }: { video: any }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+    <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Party Lantern Decorations */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+        <div className="absolute top-10 left-[8%] w-12 h-12 bg-[#FFD166] rounded-full shadow-lg"></div>
+        <div className="absolute top-5 right-[12%] w-14 h-14 bg-[#FF6B6B] rounded-full shadow-lg"></div>
+        <div className="absolute top-20 left-[25%] w-10 h-10 bg-[#4ECDC4] rounded-full shadow-lg"></div>
+        <div className="absolute bottom-32 right-[18%] w-12 h-12 bg-[#FFA07A] rounded-full shadow-lg"></div>
+        <div className="absolute bottom-20 left-[30%] w-10 h-10 bg-[#95E1D3] rounded-full shadow-lg"></div>
+        <div className="absolute top-1/2 right-[8%] w-8 h-8 bg-[#FFBE76] rounded-full shadow-lg"></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
+      <header className="relative bg-white/95 backdrop-blur-md shadow-lg border-b-4 border-[#FF6B6B] sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link
               href="/admin"
-              className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition-colors"
+              className="flex items-center gap-2 text-gray-700 hover:text-[#FF6B6B] transition-colors font-semibold rounded-lg px-3 py-2 hover:bg-[#FFD166]/10"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Back to Dashboard</span>
@@ -134,7 +144,7 @@ export default function VideoEditor({ video }: { video: any }) {
             <button
               onClick={saveLyrics}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-xl hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all disabled:opacity-50 shadow-lg font-bold transform hover:scale-105"
             >
               <Save className="w-5 h-5" />
               {saving ? 'Saving...' : 'Save All Lyrics'}
@@ -143,20 +153,32 @@ export default function VideoEditor({ video }: { video: any }) {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Video Info */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{video.title}</h1>
-          {video.description && (
-            <p className="text-gray-600 mb-4">{video.description}</p>
-          )}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-4 border-[#4ECDC4]">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full flex items-center justify-center flex-shrink-0">
+              <Music className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-[#FF6B6B] mb-2" style={{ fontFamily: 'cursive' }}>
+                {video.title}
+              </h1>
+              {video.description && (
+                <p className="text-gray-600">{video.description}</p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Video Player */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Video Player</h2>
-            <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-4 border-[#FFD166]">
+            <h2 className="text-2xl font-bold mb-4 text-[#FFD166] flex items-center gap-2" style={{ fontFamily: 'cursive' }}>
+              <Sparkles className="w-6 h-6" />
+              Video Player
+            </h2>
+            <div className="aspect-video bg-black rounded-xl overflow-hidden mb-4 border-4 border-[#FFBE76] shadow-lg">
               <YouTube
                 videoId={video.youtubeId}
                 opts={opts}
@@ -164,116 +186,128 @@ export default function VideoEditor({ video }: { video: any }) {
                 onStateChange={onPlayerStateChange}
               />
             </div>
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>Current Time: {currentTime.toFixed(2)}s</span>
+            <div className="flex items-center justify-between bg-gradient-to-r from-[#95E1D3]/20 to-[#4ECDC4]/20 p-4 rounded-xl border-2 border-[#4ECDC4]">
+              <span className="text-sm font-bold text-gray-700">
+                ⏱️ Current Time: <span className="text-[#4ECDC4]">{currentTime.toFixed(2)}s</span>
+              </span>
               <button
                 onClick={addLyric}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-lg font-bold transform hover:scale-105"
               >
                 <Plus className="w-4 h-4" />
-                Add Lyric at Current Time
+                Add Lyric Here
               </button>
             </div>
           </div>
 
           {/* Lyrics Editor */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-4 border-[#FFA07A]">
+            <h2 className="text-2xl font-bold mb-4 text-[#FF6B6B] flex items-center gap-2" style={{ fontFamily: 'cursive' }}>
+              <Music className="w-6 h-6" />
               Lyrics ({lyrics.length})
             </h2>
-            <div className="space-y-4 max-h-[600px] overflow-y-auto">
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
               {lyrics.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No lyrics yet. Click "Add Lyric" to get started!
+                <div className="text-center py-12 bg-gradient-to-br from-[#FFD166]/10 to-[#FFBE76]/10 rounded-2xl border-4 border-dashed border-[#FFD166]">
+                  <Music className="w-16 h-16 text-[#FFD166] mx-auto mb-3" />
+                  <p className="text-gray-600 font-bold text-lg" style={{ fontFamily: 'cursive' }}>
+                    No lyrics yet! 🎵
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Click "Add Lyric" to get started
+                  </p>
                 </div>
               ) : (
-                lyrics.map((lyric, index) => (
-                  <div
-                    key={index}
-                    className={`border rounded-lg p-4 ${
-                      currentTime >= lyric.startTime && currentTime <= lyric.endTime
-                        ? 'border-pink-500 bg-pink-50'
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                lyrics.map((lyric, index) => {
+                  const isActive = currentTime >= lyric.startTime && currentTime <= lyric.endTime;
+                  return (
+                    <div
+                      key={index}
+                      className={`rounded-2xl p-4 transition-all ${
+                        isActive
+                          ? 'border-4 border-[#FF6B6B] bg-gradient-to-br from-[#FF6B6B]/10 to-[#FFA07A]/10 shadow-xl scale-105'
+                          : 'border-3 border-[#95E1D3] bg-white shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => seekTo(lyric.startTime)}
+                            className="p-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-md transform hover:scale-110"
+                            title="Jump to this lyric"
+                          >
+                            <Play className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm font-bold text-white bg-gradient-to-r from-[#FFD166] to-[#FFBE76] px-3 py-1 rounded-full">
+                            #{index + 1}
+                          </span>
+                        </div>
                         <button
-                          onClick={() => seekTo(lyric.startTime)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Jump to this lyric"
+                          onClick={() => deleteLyric(index)}
+                          className="p-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-lg hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all shadow-md transform hover:scale-110"
+                          title="Delete lyric"
                         >
-                          <Play className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                        <span className="text-sm font-medium text-gray-700">
-                          #{index + 1}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => deleteLyric(index)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Delete lyric"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Thai Text
-                        </label>
-                        <textarea
-                          value={lyric.thaiText}
-                          onChange={(e) => updateLyric(index, 'thaiText', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-600 focus:border-transparent outline-none thai-text text-lg"
-                          rows={2}
-                          placeholder="ใส่เนื้อเพลงภาษาไทย..."
-                        />
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Translation
-                        </label>
-                        <textarea
-                          value={lyric.translation}
-                          onChange={(e) => updateLyric(index, 'translation', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-600 focus:border-transparent outline-none"
-                          rows={2}
-                          placeholder="Enter English translation..."
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Start Time (s)
+                          <label className="block text-xs font-bold text-[#4ECDC4] mb-1 uppercase">
+                            🇹🇭 Thai Text
                           </label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={lyric.startTime}
-                            onChange={(e) => updateLyric(index, 'startTime', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-600 focus:border-transparent outline-none"
+                          <textarea
+                            value={lyric.thaiText}
+                            onChange={(e) => updateLyric(index, 'thaiText', e.target.value)}
+                            className="w-full px-3 py-2 border-3 border-[#4ECDC4] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none thai-text text-lg bg-[#4ECDC4]/5"
+                            rows={2}
+                            placeholder="ใส่เนื้อเพลงภาษาไทย..."
                           />
                         </div>
+
                         <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            End Time (s)
+                          <label className="block text-xs font-bold text-[#FFD166] mb-1 uppercase">
+                            🇬🇧 Translation
                           </label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={lyric.endTime}
-                            onChange={(e) => updateLyric(index, 'endTime', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-600 focus:border-transparent outline-none"
+                          <textarea
+                            value={lyric.translation}
+                            onChange={(e) => updateLyric(index, 'translation', e.target.value)}
+                            className="w-full px-3 py-2 border-3 border-[#FFD166] rounded-xl focus:ring-4 focus:ring-[#FFD166] focus:border-[#FFD166] outline-none bg-[#FFD166]/5"
+                            rows={2}
+                            placeholder="Enter English translation..."
                           />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-[#FF6B6B] mb-1 uppercase">
+                              ⏱️ Start (s)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={lyric.startTime}
+                              onChange={(e) => updateLyric(index, 'startTime', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border-3 border-[#FF6B6B] rounded-xl focus:ring-4 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none font-bold bg-[#FF6B6B]/5"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-[#FFA07A] mb-1 uppercase">
+                              ⏱️ End (s)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={lyric.endTime}
+                              onChange={(e) => updateLyric(index, 'endTime', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border-3 border-[#FFA07A] rounded-xl focus:ring-4 focus:ring-[#FFA07A] focus:border-[#FFA07A] outline-none font-bold bg-[#FFA07A]/5"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
