@@ -68,7 +68,7 @@ export default function VideoList({ videos, onVideoDeleted }: VideoListProps) {
             <div className="flex gap-4">
               {/* Thumbnail */}
               <div className="flex-shrink-0">
-                <div className={`relative w-48 h-28 bg-gray-200 rounded-xl overflow-hidden border-3 ${colorTheme.border} shadow-lg`}>
+                <div className={`relative w-48 h-28 bg-gray-200 rounded-xl overflow-hidden border-[3px] ${colorTheme.border} shadow-lg`}>
                   {video.thumbnailUrl ? (
                     <Image
                       src={video.thumbnailUrl}

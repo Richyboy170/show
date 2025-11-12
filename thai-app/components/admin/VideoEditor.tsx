@@ -226,7 +226,7 @@ export default function VideoEditor({ video }: { video: any }) {
                       className={`rounded-2xl p-4 transition-all ${
                         isActive
                           ? 'border-4 border-[#FF6B6B] bg-gradient-to-br from-[#FF6B6B]/10 to-[#FFA07A]/10 shadow-xl scale-105'
-                          : 'border-3 border-[#95E1D3] bg-white shadow-md'
+                          : 'border-[3px] border-[#95E1D3] bg-white shadow-md'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -259,7 +259,7 @@ export default function VideoEditor({ video }: { video: any }) {
                           <textarea
                             value={lyric.thaiText}
                             onChange={(e) => updateLyric(index, 'thaiText', e.target.value)}
-                            className="w-full px-3 py-2 border-3 border-[#4ECDC4] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none thai-text text-lg bg-[#4ECDC4]/5"
+                            className="w-full px-3 py-2 border-[3px] border-[#4ECDC4] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none thai-text text-lg bg-[#4ECDC4]/5"
                             rows={2}
                             placeholder="ใส่เนื้อเพลงภาษาไทย..."
                           />
@@ -272,7 +272,7 @@ export default function VideoEditor({ video }: { video: any }) {
                           <textarea
                             value={lyric.translation}
                             onChange={(e) => updateLyric(index, 'translation', e.target.value)}
-                            className="w-full px-3 py-2 border-3 border-[#FFD166] rounded-xl focus:ring-4 focus:ring-[#FFD166] focus:border-[#FFD166] outline-none bg-[#FFD166]/5"
+                            className="w-full px-3 py-2 border-[3px] border-[#FFD166] rounded-xl focus:ring-4 focus:ring-[#FFD166] focus:border-[#FFD166] outline-none bg-[#FFD166]/5"
                             rows={2}
                             placeholder="Enter English translation..."
                           />
@@ -288,7 +288,7 @@ export default function VideoEditor({ video }: { video: any }) {
                               step="0.1"
                               value={lyric.startTime}
                               onChange={(e) => updateLyric(index, 'startTime', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border-3 border-[#FF6B6B] rounded-xl focus:ring-4 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none font-bold bg-[#FF6B6B]/5"
+                              className="w-full px-3 py-2 border-[3px] border-[#FF6B6B] rounded-xl focus:ring-4 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none font-bold bg-[#FF6B6B]/5"
                             />
                           </div>
                           <div>
@@ -300,7 +300,7 @@ export default function VideoEditor({ video }: { video: any }) {
                               step="0.1"
                               value={lyric.endTime}
                               onChange={(e) => updateLyric(index, 'endTime', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border-3 border-[#FFA07A] rounded-xl focus:ring-4 focus:ring-[#FFA07A] focus:border-[#FFA07A] outline-none font-bold bg-[#FFA07A]/5"
+                              className="w-full px-3 py-2 border-[3px] border-[#FFA07A] rounded-xl focus:ring-4 focus:ring-[#FFA07A] focus:border-[#FFA07A] outline-none font-bold bg-[#FFA07A]/5"
                             />
                           </div>
                         </div>

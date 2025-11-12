@@ -24,7 +24,7 @@ export default async function Home() {
         <div className="absolute top-5 left-[10%] w-16 h-16 bg-[#FFD166] rounded-full opacity-80 shadow-lg"></div>
         <div className="absolute top-3 left-[25%] w-20 h-20 bg-[#FF6B6B] rounded-full opacity-75 shadow-lg"></div>
         <div className="absolute top-8 left-[45%] w-24 h-24 bg-[#4ECDC4] rounded-full opacity-70 shadow-xl"></div>
-        <div className="absolute top-2 right-[30%] w-18 h-18 bg-[#FFA07A] rounded-full opacity-80 shadow-lg"></div>
+        <div className="absolute top-2 right-[30%] w-[4.5rem] h-[4.5rem] bg-[#FFA07A] rounded-full opacity-80 shadow-lg"></div>
         <div className="absolute top-6 right-[15%] w-20 h-20 bg-[#95E1D3] rounded-full opacity-75 shadow-lg"></div>
         <div className="absolute top-10 right-[5%] w-16 h-16 bg-[#FFBE76] rounded-full opacity-80 shadow-lg"></div>
 
@@ -40,8 +40,34 @@ export default async function Home() {
         <div className="absolute bottom-[10%] left-[40%] w-14 h-14 bg-[#FF6B6B] rounded-full opacity-65 shadow-lg"></div>
       </div>
 
-      {/* Header */}
-      <Header />
+      {/* Header - Party Scrapbook style */}
+      <header className="relative bg-white/95 backdrop-blur-sm shadow-lg border-b-4 border-[#FF6B6B]" style={{ transform: 'rotate(-0.3deg)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ transform: 'rotate(0.3deg)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A] rounded-full flex items-center justify-center">
+                  <Music className="w-7 h-7 text-white" />
+                </div>
+                <Sparkles className="w-5 h-5 text-[#FFD166] absolute -top-1 -right-1" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#FF6B6B]" style={{ fontFamily: 'cursive' }}>
+                  Josie Tso&apos;s
+                </h1>
+                <p className="text-xs sm:text-sm text-[#4ECDC4] italic font-semibold">Thai Music Celebration 🎉</p>
+              </div>
+            </div>
+            <Link
+              href="/auth/signin"
+              className="px-5 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-full hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all transform hover:scale-105 shadow-lg border-2 border-white font-semibold"
+              style={{ transform: 'rotate(1deg)' }}
+            >
+              Admin
+            </Link>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section - Party header with teddy bear theme */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
@@ -53,19 +79,19 @@ export default async function Home() {
             <div className="absolute -bottom-4 -left-4 w-8 h-8 bg-[#FFA07A] rounded-full shadow-lg"></div>
             <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-[#95E1D3] rounded-full shadow-lg"></div>
             
-            <h2 className="text-6xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3" style={{ fontFamily: 'cursive' }}>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3" style={{ fontFamily: 'cursive' }}>
               Featured Songs
-              <Heart className="w-12 h-12 text-[#FF6B6B] fill-[#FF6B6B] animate-pulse" />
+              <Heart className="w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 text-[#FF6B6B] fill-[#FF6B6B] animate-pulse" />
             </h2>
-            <p className="text-2xl text-gray-700 italic mb-3">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-700 italic mb-3">
               Lovingly translated by Josie ✨
             </p>
             <div className="flex justify-center gap-3 mt-5">
-              <div className="w-3 h-3 bg-[#FFD166] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-              <div className="w-3 h-3 bg-[#FF6B6B] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-3 h-3 bg-[#4ECDC4] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-3 h-3 bg-[#FFA07A] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
-              <div className="w-3 h-3 bg-[#95E1D3] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              <div className="w-3 h-3 bg-[#FFD166] rounded-full animate-bounce-1"></div>
+              <div className="w-3 h-3 bg-[#FF6B6B] rounded-full animate-bounce-2"></div>
+              <div className="w-3 h-3 bg-[#4ECDC4] rounded-full animate-bounce-3"></div>
+              <div className="w-3 h-3 bg-[#FFA07A] rounded-full animate-bounce-4"></div>
+              <div className="w-3 h-3 bg-[#95E1D3] rounded-full animate-bounce-5"></div>
             </div>
           </div>
         </div>
@@ -109,7 +135,7 @@ export default async function Home() {
                 <Link
                   key={video.id}
                   href={`/watch/${video.youtubeId}`}
-                  className={`group bg-white p-5 shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 hover:rotate-0 hover:z-10 ${rotation} border-8 ${borderColor} relative`}
+                  className={`group bg-white p-5 shadow-2xl hover:shadow-party-hover transition-all transform hover:scale-110 hover:rotate-0 hover:z-10 ${rotation} border-8 ${borderColor} relative`}
                 >
                   {/* Washi tape effect - colorful */}
                   <div 
@@ -160,7 +186,7 @@ export default async function Home() {
                   </div>
                   
                   {/* Additional cute dot decoration */}
-                  <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-white rounded-full shadow-md border-3 border-gray-100"></div>
+                  <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-white rounded-full shadow-md border-[3px] border-gray-100"></div>
                 </Link>
               );
             })}

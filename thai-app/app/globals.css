@@ -49,3 +49,125 @@ body {
 .lyric-line.future {
   @apply text-gray-600;
 }
+
+/* Custom animations for party theme */
+@keyframes bounce-delay-1 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes bounce-delay-2 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes bounce-delay-3 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes bounce-delay-4 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes bounce-delay-5 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+.animate-bounce-1 {
+  animation: bounce-delay-1 1s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.animate-bounce-2 {
+  animation: bounce-delay-2 1s ease-in-out infinite;
+  animation-delay: 0.1s;
+}
+
+.animate-bounce-3 {
+  animation: bounce-delay-3 1s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.animate-bounce-4 {
+  animation: bounce-delay-4 1s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+.animate-bounce-5 {
+  animation: bounce-delay-5 1s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+/* Pulse animation with delays */
+@keyframes pulse-delay {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-delay-1 {
+  animation: pulse-delay 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-delay: 0s;
+}
+
+.animate-pulse-delay-2 {
+  animation: pulse-delay 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-delay: 0.2s;
+}
+
+.animate-pulse-delay-3 {
+  animation: pulse-delay 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-delay: 0.4s;
+}
+
+/* Smooth transitions for hover effects */
+.transition-party {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom shadow for party cards */
+.shadow-party {
+  box-shadow: 0 10px 25px -5px rgba(255, 107, 107, 0.1),
+              0 8px 10px -6px rgba(78, 205, 196, 0.1);
+}
+
+.shadow-party-hover {
+  box-shadow: 0 20px 35px -5px rgba(255, 107, 107, 0.2),
+              0 15px 20px -6px rgba(78, 205, 196, 0.2);
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+  .responsive-heading {
+    font-size: 2rem !important;
+  }
+  .responsive-subheading {
+    font-size: 1.25rem !important;
+  }
+}
