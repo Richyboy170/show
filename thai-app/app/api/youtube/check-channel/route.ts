@@ -11,6 +11,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin
+    if (!session.user?.isAdmin) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const channelId = process.env.YOUTUBE_CHANNEL_ID;
     if (!channelId) {
       return NextResponse.json({ error: "YouTube channel ID not configured" }, { status: 500 });

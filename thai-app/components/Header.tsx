@@ -35,7 +35,12 @@ export default function Header() {
             ) : session?.user ? (
               <>
                 {/* User Profile */}
-                <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-md border-2 border-[#4ECDC4]">
+                <div className={`flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-md border-2 ${session.user.isAdmin ? 'border-[#FFD166]' : 'border-[#4ECDC4]'} relative`}>
+                  {session.user.isAdmin && (
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-[#FFD166] to-[#FFBE76] text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg border-2 border-white animate-pulse">
+                      ADMIN
+                    </div>
+                  )}
                   {session.user.image ? (
                     <Image
                       src={session.user.image}
@@ -49,16 +54,13 @@ export default function Header() {
                   )}
                   <div className="hidden sm:block">
                     <p className="text-sm font-semibold text-gray-800">{session.user.name}</p>
-                    {session.user.isAdmin && (
-                      <p className="text-xs text-[#FF6B6B] font-bold">Admin</p>
-                    )}
                     {!session.user.isAdmin && (
-                      <p className="text-xs text-[#4ECDC4]">Music Lover</p>
+                      <p className="text-xs text-[#4ECDC4] font-medium">Music Lover</p>
                     )}
                   </div>
                 </div>
 
-                {/* Navigation Links */}
+                {/* Navigation Links - Only show favorites for non-admin users */}
                 {!session.user.isAdmin && (
                   <Link
                     href="/favorites"
@@ -69,6 +71,7 @@ export default function Header() {
                   </Link>
                 )}
 
+                {/* Admin Panel Link - Only visible to admins */}
                 {session.user.isAdmin && (
                   <Link
                     href="/admin"

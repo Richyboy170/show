@@ -34,8 +34,8 @@ export default function SignIn() {
     if (result?.error) {
       setError("Invalid email or password. Only admin can access.");
     } else {
-      // Credentials are only for admin, so redirect to admin panel
-      router.push("/admin");
+      // Redirect to home page after successful sign-in
+      router.push("/");
     }
   };
 
