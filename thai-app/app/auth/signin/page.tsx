@@ -102,6 +102,7 @@ export default function SignIn() {
             onClick={handleGoogleSignIn}
             disabled={loading}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 border-4 border-[#4ECDC4] rounded-2xl hover:border-[#FF6B6B] hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6 bg-white transform hover:scale-105"
+            suppressHydrationWarning
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -156,6 +157,7 @@ export default function SignIn() {
                   className="w-full pl-10 pr-4 py-3 border-4 border-[#95E1D3] rounded-2xl focus:ring-2 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none transition-all"
                   placeholder="admin@example.com"
                   required
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -174,6 +176,7 @@ export default function SignIn() {
                   className="w-full pl-10 pr-4 py-3 border-4 border-[#95E1D3] rounded-2xl focus:ring-2 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none transition-all"
                   placeholder="••••••••"
                   required
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -183,6 +186,7 @@ export default function SignIn() {
               disabled={loading}
               className="w-full bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white py-3 rounded-2xl font-bold hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
               style={{ fontFamily: 'cursive' }}
+              suppressHydrationWarning
             >
               {loading ? "Signing in..." : "Sign In 🎵"}
             </button>
