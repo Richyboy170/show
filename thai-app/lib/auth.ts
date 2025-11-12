@@ -125,6 +125,12 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
+      // Always redirect to home page after sign in for fresh data load
+      // This ensures users see their personalized content from database
+      if (url.startsWith("/auth/signin") || url.startsWith("/api/auth")) {
+        return baseUrl;
+      }
+
       // If the URL is a relative path, prepend baseUrl
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
@@ -133,7 +139,7 @@ export const authOptions: NextAuthOptions = {
       else if (new URL(url).origin === baseUrl) {
         return url;
       }
-      // Default to baseUrl
+      // Default to home page (baseUrl)
       return baseUrl;
     },
     async session({ session, token }) {
