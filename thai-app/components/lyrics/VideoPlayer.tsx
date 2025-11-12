@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import YouTube, { YouTubeProps } from "react-youtube";
 import { ArrowLeft, Music, Heart, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Lyric {
   id: string;
@@ -23,9 +24,12 @@ interface Video {
 }
 
 export default function VideoPlayer({ video }: { video: Video }) {
+  const { data: session } = useSession();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const playerRef = useRef<any>(null);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +40,16 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const onPlayerStateChange: YouTubeProps['onStateChange'] = (event) => {
     setIsPlaying(event.data === 1); // 1 = playing
   };
+
+  // Check if video is favorited on mount
+  useEffect(() => {
+    if (session && !session.user.isAdmin) {
+      fetch(`/api/favorites/check?videoId=${video.id}`)
+        .then(res => res.json())
+        .then(data => setIsFavorited(data.isFavorited))
+        .catch(err => console.error('Error checking favorite:', err));
+    }
+  }, [session, video.id]);
 
   // Update current time and find active lyric
   useEffect(() => {
@@ -70,6 +84,37 @@ export default function VideoPlayer({ video }: { video: Video }) {
     if (playerRef.current) {
       playerRef.current.seekTo(startTime);
       playerRef.current.playVideo();
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (!session || session.user.isAdmin) return;
+
+    setIsLoadingFavorite(true);
+    try {
+      if (isFavorited) {
+        // Unlike
+        const res = await fetch(`/api/favorites?videoId=${video.id}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          setIsFavorited(false);
+        }
+      } else {
+        // Like
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId: video.id })
+        });
+        if (res.ok) {
+          setIsFavorited(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setIsLoadingFavorite(false);
     }
   };
 
@@ -122,7 +167,25 @@ export default function VideoPlayer({ video }: { video: Video }) {
                 <p className="text-gray-700 font-medium">{video.description}</p>
               )}
             </div>
-            <Heart className="w-8 h-8 text-[#FF6B6B] fill-[#FF6B6B] animate-pulse flex-shrink-0" />
+            {session && !session.user.isAdmin ? (
+              <button
+                onClick={toggleFavorite}
+                disabled={isLoadingFavorite}
+                className={`flex-shrink-0 transition-all transform hover:scale-110 ${
+                  isLoadingFavorite ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <Heart
+                  className={`w-10 h-10 ${
+                    isFavorited
+                      ? 'text-[#FF6B6B] fill-[#FF6B6B] animate-pulse'
+                      : 'text-gray-400 hover:text-[#FF6B6B]'
+                  }`}
+                />
+              </button>
+            ) : (
+              <Heart className="w-8 h-8 text-[#FF6B6B] fill-[#FF6B6B] animate-pulse flex-shrink-0" />
+            )}
           </div>
         </div>
 

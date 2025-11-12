@@ -36,6 +36,9 @@ model Video {
   // Lyrics data
   lyrics          Lyric[]
 
+  // User favorites
+  favorites       Favorite[]
+
   // Admin who added/manages this video
   adminId         String
   admin           Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
@@ -103,4 +106,32 @@ model Notification {
   createdAt   DateTime  @default(now())
 
   @@index([adminId, isRead])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  googleId      String?   @unique
+
+  favorites     Favorite[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Favorite {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  videoId     String
+  video       Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
 }
