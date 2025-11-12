@@ -14,7 +14,8 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    await signIn("google", { callbackUrl: "/admin" });
+    // Don't specify callbackUrl, let the auth callback handle redirect based on user role
+    await signIn("google");
   };
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
@@ -33,6 +34,7 @@ export default function SignIn() {
     if (result?.error) {
       setError("Invalid email or password. Only admin can access.");
     } else {
+      // Credentials are only for admin, so redirect to admin panel
       router.push("/admin");
     }
   };

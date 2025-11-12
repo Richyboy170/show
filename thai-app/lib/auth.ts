@@ -124,6 +124,18 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      // If the URL is a relative path, prepend baseUrl
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // If URL is from the same domain, allow it
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      // Default to baseUrl
+      return baseUrl;
+    },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
