@@ -14,8 +14,8 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    // Don't specify callbackUrl, let the auth callback handle redirect based on user role
-    await signIn("google");
+    // Redirect to home page after successful Google sign-in
+    await signIn("google", { callbackUrl: "/" });
   };
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
@@ -40,28 +40,68 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Logo and Title */}
+    <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center p-4">
+      {/* Paper Lantern Decorations - matching home page */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Top lanterns */}
+        <div className="absolute top-5 left-[10%] w-16 h-16 bg-[#FFD166] rounded-full opacity-80 shadow-lg animate-bounce-1"></div>
+        <div className="absolute top-3 left-[25%] w-20 h-20 bg-[#FF6B6B] rounded-full opacity-75 shadow-lg animate-bounce-2"></div>
+        <div className="absolute top-8 left-[45%] w-24 h-24 bg-[#4ECDC4] rounded-full opacity-70 shadow-xl animate-bounce-3"></div>
+        <div className="absolute top-2 right-[30%] w-[4.5rem] h-[4.5rem] bg-[#FFA07A] rounded-full opacity-80 shadow-lg animate-bounce-4"></div>
+        <div className="absolute top-6 right-[15%] w-20 h-20 bg-[#95E1D3] rounded-full opacity-75 shadow-lg animate-bounce-5"></div>
+        <div className="absolute top-10 right-[5%] w-16 h-16 bg-[#FFBE76] rounded-full opacity-80 shadow-lg animate-bounce-1"></div>
+
+        {/* Middle scattered lanterns */}
+        <div className="absolute top-[30%] left-[5%] w-14 h-14 bg-[#FF6B6B] rounded-full opacity-60 shadow-lg animate-bounce-2"></div>
+        <div className="absolute top-[25%] right-[8%] w-12 h-12 bg-[#4ECDC4] rounded-full opacity-65 shadow-md animate-bounce-3"></div>
+        <div className="absolute top-[45%] left-[15%] w-10 h-10 bg-[#FFD166] rounded-full opacity-70 shadow-md animate-bounce-4"></div>
+        <div className="absolute top-[50%] right-[20%] w-14 h-14 bg-[#FFA07A] rounded-full opacity-65 shadow-lg animate-bounce-5"></div>
+
+        {/* Bottom lanterns */}
+        <div className="absolute bottom-[15%] left-[20%] w-12 h-12 bg-[#95E1D3] rounded-full opacity-70 shadow-md animate-bounce-1"></div>
+        <div className="absolute bottom-[20%] right-[25%] w-16 h-16 bg-[#FFBE76] rounded-full opacity-75 shadow-lg animate-bounce-2"></div>
+        <div className="absolute bottom-[10%] left-[40%] w-14 h-14 bg-[#FF6B6B] rounded-full opacity-65 shadow-lg animate-bounce-3"></div>
+      </div>
+
+      <div className="max-w-md w-full relative z-10">
+        {/* Logo and Title - Party style */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <Music className="w-16 h-16 text-pink-600" />
+            <div className="relative">
+              <Music className="w-20 h-20 text-[#FF6B6B] animate-pulse" />
+              {/* Decorative dots around icon */}
+              <div className="absolute -top-2 -right-2 w-4 h-4 bg-[#FFD166] rounded-full shadow-md"></div>
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-[#4ECDC4] rounded-full shadow-md"></div>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-            Admin Login
+          <h1 className="text-4xl font-bold text-gray-800 mb-2" style={{ fontFamily: 'cursive' }}>
+            Welcome! 🎉
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-xl text-gray-700 italic">
             Sign in to manage your Thai lyrics collection
           </p>
+          <div className="flex justify-center gap-2 mt-4">
+            <div className="w-2 h-2 bg-[#FFD166] rounded-full animate-bounce-1"></div>
+            <div className="w-2 h-2 bg-[#FF6B6B] rounded-full animate-bounce-2"></div>
+            <div className="w-2 h-2 bg-[#4ECDC4] rounded-full animate-bounce-3"></div>
+            <div className="w-2 h-2 bg-[#FFA07A] rounded-full animate-bounce-4"></div>
+            <div className="w-2 h-2 bg-[#95E1D3] rounded-full animate-bounce-5"></div>
+          </div>
         </div>
 
-        {/* Sign In Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        {/* Sign In Card - Polaroid style */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-[#FFD166] transform hover:rotate-0 transition-all -rotate-1 relative">
+          {/* Corner decorations - like paper lanterns */}
+          <div className="absolute -top-3 -left-3 w-6 h-6 bg-[#4ECDC4] rounded-full shadow-lg"></div>
+          <div className="absolute -top-3 -right-3 w-6 h-6 bg-[#FF6B6B] rounded-full shadow-lg"></div>
+          <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-[#FFA07A] rounded-full shadow-lg"></div>
+          <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-[#95E1D3] rounded-full shadow-lg"></div>
+
           {/* Google Sign In */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-300 rounded-lg hover:border-pink-600 hover:bg-pink-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-4 border-[#4ECDC4] rounded-2xl hover:border-[#FF6B6B] hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6 bg-white transform hover:scale-105"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -84,36 +124,36 @@ export default function SignIn() {
             <span className="font-medium">Continue with Google</span>
           </button>
 
-          {/* Divider */}
+          {/* Divider - Party style */}
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t-2 border-[#95E1D3]"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or sign in with password</span>
+              <span className="px-4 bg-white text-gray-700 font-semibold" style={{ fontFamily: 'cursive' }}>Or sign in with password</span>
             </div>
           </div>
 
           {/* Password Sign In Form */}
           <form onSubmit={handleCredentialsSignIn} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-[#FF6B6B]/10 border-4 border-[#FF6B6B] text-[#FF6B6B] px-4 py-3 rounded-2xl text-sm font-semibold">
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-base font-bold text-gray-700 mb-2" style={{ fontFamily: 'cursive' }}>
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#4ECDC4]" />
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-600 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-4 py-3 border-4 border-[#95E1D3] rounded-2xl focus:ring-2 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none transition-all"
                   placeholder="admin@example.com"
                   required
                 />
@@ -121,17 +161,17 @@ export default function SignIn() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-base font-bold text-gray-700 mb-2" style={{ fontFamily: 'cursive' }}>
                 Admin Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#4ECDC4]" />
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-600 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-4 py-3 border-4 border-[#95E1D3] rounded-2xl focus:ring-2 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none transition-all"
                   placeholder="••••••••"
                   required
                 />
@@ -141,17 +181,22 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white py-3 rounded-2xl font-bold hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              style={{ fontFamily: 'cursive' }}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Signing in..." : "Sign In 🎵"}
             </button>
           </form>
         </div>
 
-        {/* Back to Home */}
-        <div className="text-center mt-6">
-          <a href="/" className="text-pink-600 hover:text-pink-700 font-medium">
-            Back to Home
+        {/* Back to Home - Party style */}
+        <div className="text-center mt-8">
+          <a
+            href="/"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-full font-bold hover:shadow-xl transform hover:scale-110 transition-all"
+            style={{ fontFamily: 'cursive' }}
+          >
+            ← Back to Home 🏠
           </a>
         </div>
       </div>
