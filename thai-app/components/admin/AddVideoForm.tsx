@@ -72,7 +72,7 @@ export default function AddVideoForm({ onVideoAdded, adminId }: AddVideoFormProp
             type="url"
             value={youtubeUrl}
             onChange={(e) => setYoutubeUrl(e.target.value)}
-            className="w-full px-5 py-4 border-3 border-[#95E1D3] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none text-lg transition-all"
+            className="w-full px-5 py-4 border-[3px] border-[#95E1D3] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none text-lg transition-all"
             placeholder="https://www.youtube.com/watch?v=..."
             required
             disabled={loading}

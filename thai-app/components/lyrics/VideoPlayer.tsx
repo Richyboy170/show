@@ -200,7 +200,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
                         key={lyric.id}
                         id={`lyric-${index}`}
                         onClick={() => seekToLyric(lyric.startTime)}
-                        className={`p-4 rounded-xl cursor-pointer transition-all duration-300 border-3 ${borderColor} ${bgColor} hover:shadow-lg ${
+                        className={`p-4 rounded-xl cursor-pointer transition-all duration-300 border-[3px] ${borderColor} ${bgColor} hover:shadow-lg ${
                           isActive ? 'shadow-xl scale-105 ring-4 ring-[#FF6B6B]/20' : ''
                         }`}
                       >
@@ -210,9 +210,9 @@ export default function VideoPlayer({ video }: { video: Video }) {
                           </span>
                           {isActive && (
                             <div className="flex gap-1">
-                              <div className="w-2 h-2 bg-[#FF6B6B] rounded-full animate-pulse"></div>
-                              <div className="w-2 h-2 bg-[#FFD166] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                              <div className="w-2 h-2 bg-[#4ECDC4] rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                              <div className="w-2 h-2 bg-[#FF6B6B] rounded-full animate-pulse-delay-1"></div>
+                              <div className="w-2 h-2 bg-[#FFD166] rounded-full animate-pulse-delay-2"></div>
+                              <div className="w-2 h-2 bg-[#4ECDC4] rounded-full animate-pulse-delay-3"></div>
                             </div>
                           )}
                         </div>
