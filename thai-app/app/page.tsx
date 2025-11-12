@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
-import { Music, Heart } from "lucide-react";
+import { Music, Heart, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 
 export default async function Home() {
