@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
-import { Music, Heart, Sparkles } from "lucide-react";
+import { Music, Heart } from "lucide-react";
 import Header from "@/components/Header";
 
 export default async function Home() {
@@ -40,34 +40,8 @@ export default async function Home() {
         <div className="absolute bottom-[10%] left-[40%] w-14 h-14 bg-[#FF6B6B] rounded-full opacity-65 shadow-lg"></div>
       </div>
 
-      {/* Header - Party Scrapbook style */}
-      <header className="relative bg-white/95 backdrop-blur-sm shadow-lg border-b-4 border-[#FF6B6B]" style={{ transform: 'rotate(-0.3deg)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ transform: 'rotate(0.3deg)' }}>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A] rounded-full flex items-center justify-center">
-                  <Music className="w-7 h-7 text-white" />
-                </div>
-                <Sparkles className="w-5 h-5 text-[#FFD166] absolute -top-1 -right-1" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#FF6B6B]" style={{ fontFamily: 'cursive' }}>
-                  Josie Tso&apos;s
-                </h1>
-                <p className="text-xs sm:text-sm text-[#4ECDC4] italic font-semibold">Thai Music Celebration 🎉</p>
-              </div>
-            </div>
-            <Link
-              href="/auth/signin"
-              className="px-5 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-full hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all transform hover:scale-105 shadow-lg border-2 border-white font-semibold"
-              style={{ transform: 'rotate(1deg)' }}
-            >
-              Admin
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Header with user authentication */}
+      <Header />
 
       {/* Hero Section - Party header with teddy bear theme */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
@@ -107,7 +81,7 @@ export default async function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {videos.map((video, index) => {
+            {videos.map((video: any, index: number) => {
               const rotations = ['-rotate-2', 'rotate-1', '-rotate-1', 'rotate-2', '-rotate-3', 'rotate-1'];
               const rotation = rotations[index % rotations.length];
               const colors = [

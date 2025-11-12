@@ -58,6 +58,8 @@ export function parseDuration(duration: string): number {
  */
 export async function fetchVideoDetails(videoId: string): Promise<YouTubeVideo | null> {
   try {
+    console.log('[YouTube API] Fetching details for video:', videoId);
+
     const response = await axios.get(`${YOUTUBE_API_BASE}/videos`, {
       params: {
         part: 'snippet,contentDetails',
@@ -66,11 +68,20 @@ export async function fetchVideoDetails(videoId: string): Promise<YouTubeVideo |
       }
     });
 
+    console.log('[YouTube API] Response status:', response.status);
+
     if (!response.data.items || response.data.items.length === 0) {
+      console.warn('[YouTube API] No video found with ID:', videoId);
       return null;
     }
 
     const video = response.data.items[0];
+    console.log('[YouTube API] Successfully fetched video:', {
+      id: video.id,
+      title: video.snippet.title,
+      channelTitle: video.snippet.channelTitle
+    });
+
     return {
       id: video.id,
       title: video.snippet.title,
@@ -80,8 +91,24 @@ export async function fetchVideoDetails(videoId: string): Promise<YouTubeVideo |
       duration: video.contentDetails.duration,
       channelTitle: video.snippet.channelTitle
     };
-  } catch (error) {
-    console.error('Error fetching video details:', error);
+  } catch (error: any) {
+    console.error('[YouTube API] Error fetching video details:', {
+      videoId,
+      error: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+
+    // Log specific YouTube API errors
+    if (error.response?.data?.error) {
+      const ytError = error.response.data.error;
+      console.error('[YouTube API] YouTube API Error:', {
+        code: ytError.code,
+        message: ytError.message,
+        errors: ytError.errors
+      });
+    }
+
     return null;
   }
 }
