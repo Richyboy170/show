@@ -7,8 +7,14 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
 
+  // Redirect to sign-in if not authenticated
   if (!session) {
     redirect("/auth/signin");
+  }
+
+  // Redirect to home if not an admin
+  if (!session.user?.isAdmin) {
+    redirect("/");
   }
 
   // Fetch admin data
@@ -35,7 +41,7 @@ export default async function AdminPage() {
   });
 
   if (!admin) {
-    redirect("/auth/signin");
+    redirect("/");
   }
 
   // Fetch channel monitor data

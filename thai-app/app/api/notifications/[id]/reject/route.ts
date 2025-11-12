@@ -13,6 +13,11 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin
+    if (!session.user?.isAdmin) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     // Mark notification as rejected and read
     await prisma.notification.update({
       where: { id: params.id },

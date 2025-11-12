@@ -7,8 +7,14 @@ import VideoEditor from "@/components/admin/VideoEditor";
 export default async function EditVideoPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
+  // Redirect to sign-in if not authenticated
   if (!session) {
     redirect("/auth/signin");
+  }
+
+  // Redirect to home if not an admin
+  if (!session.user?.isAdmin) {
+    redirect("/");
   }
 
   const video = await prisma.video.findUnique({
