@@ -1,22 +1,29 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import { isAdminEmail } from "./admin-utils";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          prompt: "consent",
+          prompt: "select_account",
           access_type: "offline",
           response_type: "code"
         }
+      },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture
+        };
       }
     }),
     CredentialsProvider({
@@ -30,9 +37,8 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Check if this is the admin email
-        const adminEmail = process.env.ADMIN_EMAIL;
-        if (credentials.email !== adminEmail) {
+        // Check if this email is in the admin list (from .env)
+        if (!isAdminEmail(credentials.email)) {
           return null;
         }
 
@@ -70,59 +76,87 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google") {
-        const adminEmail = process.env.ADMIN_EMAIL;
-
-        // Check if this is the admin email
-        if (user.email === adminEmail) {
-          // Admin login
-          let admin = await prisma.admin.findUnique({
-            where: { email: user.email! }
-          });
-
-          if (!admin) {
-            // Create admin with Google OAuth
-            const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD!, 10);
-            admin = await prisma.admin.create({
-              data: {
-                email: user.email!,
-                name: user.name,
-                googleId: account.providerAccountId,
-                password: hashedPassword,
-                image: user.image
-              }
-            });
-          } else if (!admin.googleId) {
-            // Link Google account to existing admin
-            await prisma.admin.update({
-              where: { id: admin.id },
-              data: {
-                googleId: account.providerAccountId,
-                image: user.image,
-                name: user.name
-              }
-            });
+      try {
+        if (account?.provider === "google") {
+          if (!user.email) {
+            console.error("No email provided from Google OAuth");
+            return false;
           }
-        } else {
-          // Regular user login
-          let regularUser = await prisma.user.findUnique({
-            where: { email: user.email! }
-          });
 
-          if (!regularUser) {
-            // Create regular user
-            regularUser = await prisma.user.create({
-              data: {
-                email: user.email!,
-                name: user.name,
-                googleId: account.providerAccountId,
-                image: user.image
-              }
+          // Check if this email is in the admin list (from .env)
+          if (isAdminEmail(user.email)) {
+            // Admin login
+            let admin = await prisma.admin.findUnique({
+              where: { email: user.email }
             });
+
+            if (!admin) {
+              // Create admin with Google OAuth
+              const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD!, 10);
+              admin = await prisma.admin.create({
+                data: {
+                  email: user.email,
+                  name: user.name || "Admin",
+                  googleId: account.providerAccountId,
+                  password: hashedPassword,
+                  image: user.image
+                }
+              });
+              console.log("Created new admin via Google OAuth:", admin.email);
+            } else {
+              // Update existing admin with latest Google info
+              await prisma.admin.update({
+                where: { id: admin.id },
+                data: {
+                  googleId: account.providerAccountId,
+                  image: user.image,
+                  name: user.name || admin.name
+                }
+              });
+              console.log("Updated existing admin:", admin.email);
+            }
+
+            // Set user.id to admin.id for JWT
+            user.id = admin.id;
+          } else {
+            // Regular user login
+            let regularUser = await prisma.user.findUnique({
+              where: { email: user.email }
+            });
+
+            if (!regularUser) {
+              // Create regular user
+              regularUser = await prisma.user.create({
+                data: {
+                  email: user.email,
+                  name: user.name || "User",
+                  googleId: account.providerAccountId,
+                  image: user.image
+                }
+              });
+              console.log("Created new user via Google OAuth:", regularUser.email);
+            } else {
+              // Update existing user with latest Google info
+              await prisma.user.update({
+                where: { id: regularUser.id },
+                data: {
+                  googleId: account.providerAccountId,
+                  image: user.image,
+                  name: user.name || regularUser.name
+                }
+              });
+              console.log("Updated existing user:", regularUser.email);
+            }
+
+            // Set user.id to regularUser.id for JWT
+            user.id = regularUser.id;
           }
         }
+        return true;
+      } catch (error) {
+        console.error("Error in signIn callback:", error);
+        return false;
       }
-      return true;
     },
     async redirect({ url, baseUrl }) {
       // Always redirect to home page after sign in for fresh data load
@@ -143,20 +177,53 @@ export const authOptions: NextAuthOptions = {
       return baseUrl;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.sub!;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.image = token.picture as string;
         session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
+      // Initial sign in
       if (user) {
         token.sub = user.id;
+        token.email = user.email!;
+        token.name = user.name || "";
+        token.picture = user.image || null;
 
-        // Check if user is admin
-        const adminEmail = process.env.ADMIN_EMAIL;
-        token.isAdmin = user.email === adminEmail;
+        // Check if user email is in admin list (from .env)
+        token.isAdmin = isAdminEmail(user.email);
       }
+
+      // Handle updates or refresh admin status
+      if (trigger === "update" || !user) {
+        // Refresh user data from database and check admin status
+        if (isAdminEmail(token.email)) {
+          // Admin user
+          const admin = await prisma.admin.findUnique({
+            where: { email: token.email as string }
+          });
+          if (admin) {
+            token.name = admin.name || "";
+            token.picture = admin.image || null;
+            token.isAdmin = true;
+          }
+        } else {
+          // Regular user
+          const regularUser = await prisma.user.findUnique({
+            where: { email: token.email as string }
+          });
+          if (regularUser) {
+            token.name = regularUser.name || "";
+            token.picture = regularUser.image || null;
+            token.isAdmin = false;
+          }
+        }
+      }
+
       return token;
     }
   },
@@ -165,7 +232,10 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/error"
   },
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
+  useSecureCookies: process.env.NODE_ENV === "production",
 };

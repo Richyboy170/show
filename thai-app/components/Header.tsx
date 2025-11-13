@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { Music, Sparkles, Heart, User, LogOut } from "lucide-react";
@@ -60,16 +60,14 @@ export default function Header() {
                   </div>
                 </div>
 
-                {/* Navigation Links - Only show favorites for non-admin users */}
-                {!session.user.isAdmin && (
-                  <Link
-                    href="/favorites"
-                    className="px-4 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-full hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all transform hover:scale-105 shadow-lg border-2 border-white font-semibold flex items-center gap-2"
-                  >
-                    <Heart className="w-4 h-4" />
-                    My Favorites
-                  </Link>
-                )}
+                {/* Favorites Link - Available to all authenticated users */}
+                <Link
+                  href="/favorites"
+                  className="px-4 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-full hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all transform hover:scale-105 shadow-lg border-2 border-white font-semibold flex items-center gap-2"
+                >
+                  <Heart className="w-4 h-4" />
+                  My Favorites
+                </Link>
 
                 {/* Admin Panel Link - Only visible to admins */}
                 {session.user.isAdmin && (
@@ -91,13 +89,13 @@ export default function Header() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => signIn('google')}
-                className="px-5 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-full hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all transform hover:scale-105 shadow-lg border-2 border-white font-semibold"
+              <Link
+                href="/auth/signin"
+                className="px-5 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-full hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all transform hover:scale-105 shadow-lg border-2 border-white font-semibold inline-block"
                 style={{ transform: 'rotate(1deg)' }}
               >
                 Sign In
-              </button>
+              </Link>
             )}
           </div>
         </div>

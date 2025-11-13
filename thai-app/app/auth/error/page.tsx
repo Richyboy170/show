@@ -18,7 +18,7 @@ export default function AuthError() {
     OAuthAccountNotLinked: 'To confirm your identity, sign in with the same account you used originally.',
     EmailSignin: 'Check your email address.',
     CredentialsSignin: 'Sign in failed. Check the details you provided are correct.',
-    default: 'Unable to sign in. Only admin users can access this application.',
+    default: 'Unable to sign in. Please try again or contact support if the problem persists.',
   };
 
   const errorMessage = error ? errorMessages[error] || errorMessages.default : errorMessages.default;

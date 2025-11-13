@@ -33,12 +33,7 @@ export default function FavoritesPage() {
       return;
     }
 
-    if (session?.user.isAdmin) {
-      router.push("/admin");
-      return;
-    }
-
-    if (session && !session.user.isAdmin) {
+    if (session) {
       fetch('/api/favorites')
         .then(res => res.json())
         .then(data => {
@@ -63,7 +58,7 @@ export default function FavoritesPage() {
     );
   }
 
-  if (!session || session.user.isAdmin) {
+  if (!session) {
     return null;
   }
 

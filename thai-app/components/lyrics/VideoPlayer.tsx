@@ -43,7 +43,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
 
   // Check if video is favorited on mount
   useEffect(() => {
-    if (session && !session.user.isAdmin) {
+    if (session) {
       fetch(`/api/favorites/check?videoId=${video.id}`)
         .then(res => res.json())
         .then(data => setIsFavorited(data.isFavorited))
@@ -88,7 +88,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
   };
 
   const toggleFavorite = async () => {
-    if (!session || session.user.isAdmin) return;
+    if (!session) return;
 
     setIsLoadingFavorite(true);
     try {
@@ -167,7 +167,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
                 <p className="text-gray-700 font-medium">{video.description}</p>
               )}
             </div>
-            {session && !session.user.isAdmin ? (
+            {session ? (
               <button
                 onClick={toggleFavorite}
                 disabled={isLoadingFavorite}
@@ -184,7 +184,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
                 />
               </button>
             ) : (
-              <Heart className="w-8 h-8 text-[#FF6B6B] fill-[#FF6B6B] animate-pulse flex-shrink-0" />
+              <Heart className="w-8 h-8 text-gray-400 flex-shrink-0" />
             )}
           </div>
         </div>

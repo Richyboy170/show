@@ -280,27 +280,31 @@ export default function VideoEditor({ video }: { video: any }) {
 
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-bold text-[#FF6B6B] mb-1 uppercase">
+                            <label htmlFor={`start-time-${index}`} className="block text-xs font-bold text-[#FF6B6B] mb-1 uppercase">
                               ⏱️ Start (s)
                             </label>
                             <input
+                              id={`start-time-${index}`}
                               type="number"
                               step="0.1"
                               value={lyric.startTime}
                               onChange={(e) => updateLyric(index, 'startTime', parseFloat(e.target.value))}
                               className="w-full px-3 py-2 border-[3px] border-[#FF6B6B] rounded-xl focus:ring-4 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none font-bold bg-[#FF6B6B]/5"
+                              aria-label="Start time in seconds"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-[#FFA07A] mb-1 uppercase">
+                            <label htmlFor={`end-time-${index}`} className="block text-xs font-bold text-[#FFA07A] mb-1 uppercase">
                               ⏱️ End (s)
                             </label>
                             <input
+                              id={`end-time-${index}`}
                               type="number"
                               step="0.1"
                               value={lyric.endTime}
                               onChange={(e) => updateLyric(index, 'endTime', parseFloat(e.target.value))}
                               className="w-full px-3 py-2 border-[3px] border-[#FFA07A] rounded-xl focus:ring-4 focus:ring-[#FFA07A] focus:border-[#FFA07A] outline-none font-bold bg-[#FFA07A]/5"
+                              aria-label="End time in seconds"
                             />
                           </div>
                         </div>

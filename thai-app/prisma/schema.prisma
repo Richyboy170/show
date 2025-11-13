@@ -21,6 +21,7 @@ model Admin {
 
   videos        Video[]
   notifications Notification[]
+  favorites     Favorite[]
 }
 
 model Video {
@@ -123,8 +124,13 @@ model User {
 
 model Favorite {
   id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Either userId OR adminId will be set (not both)
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  adminId     String?
+  admin       Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   videoId     String
   video       Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
@@ -132,6 +138,8 @@ model Favorite {
   createdAt   DateTime  @default(now())
 
   @@unique([userId, videoId])
+  @@unique([adminId, videoId])
   @@index([userId])
+  @@index([adminId])
   @@index([videoId])
 }
