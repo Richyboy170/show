@@ -5,6 +5,15 @@ import YouTube, { YouTubeProps } from "react-youtube";
 import { ArrowLeft, Music, Heart, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import ExpandableDescription from "@/components/ExpandableDescription";
+
+interface LyricWord {
+  id: string;
+  text: string;
+  startTime: number;
+  duration: number;
+  order: number;
+}
 
 interface Lyric {
   id: string;
@@ -13,6 +22,7 @@ interface Lyric {
   startTime: number;
   endTime: number;
   order: number;
+  words?: LyricWord[];
 }
 
 interface Video {
@@ -164,7 +174,11 @@ export default function VideoPlayer({ video }: { video: Video }) {
                 {video.title}
               </h1>
               {video.description && (
-                <p className="text-gray-700 font-medium">{video.description}</p>
+                <ExpandableDescription
+                  description={video.description}
+                  maxLines={3}
+                  className="text-gray-700 font-medium"
+                />
               )}
             </div>
             {session ? (
@@ -279,14 +293,42 @@ export default function VideoPlayer({ video }: { video: Video }) {
                             </div>
                           )}
                         </div>
-                        <p
-                          className={`thai-text mb-2 font-bold ${
-                            isActive ? 'text-2xl' : 'text-lg'
-                          } ${textColor}`}
-                          style={isActive ? { fontFamily: 'cursive' } : {}}
-                        >
-                          {lyric.thaiText}
-                        </p>
+                        {lyric.words && lyric.words.length > 0 ? (
+                          <p
+                            className={`thai-text mb-2 font-bold ${
+                              isActive ? 'text-2xl' : 'text-lg'
+                            } ${textColor} flex flex-wrap gap-1`}
+                            style={isActive ? { fontFamily: 'cursive' } : {}}
+                          >
+                            {lyric.words.map((word) => {
+                              const wordEndTime = word.startTime + word.duration;
+                              const isWordActive = currentTime >= word.startTime && currentTime <= wordEndTime;
+
+                              return (
+                                <span
+                                  key={word.id}
+                                  className={`inline-block transition-all duration-100 ${
+                                    isWordActive ? 'animate-bounce-word text-[#FF6B6B] scale-125 font-extrabold' : ''
+                                  }`}
+                                  style={{
+                                    animation: isWordActive ? 'bounceWord 0.3s ease-in-out' : 'none'
+                                  }}
+                                >
+                                  {word.text}
+                                </span>
+                              );
+                            })}
+                          </p>
+                        ) : (
+                          <p
+                            className={`thai-text mb-2 font-bold ${
+                              isActive ? 'text-2xl' : 'text-lg'
+                            } ${textColor}`}
+                            style={isActive ? { fontFamily: 'cursive' } : {}}
+                          >
+                            {lyric.thaiText}
+                          </p>
+                        )}
                         {lyric.translation && (
                           <p
                             className={`text-sm font-semibold ${subTextColor}`}

@@ -162,6 +162,29 @@ body {
               0 15px 20px -6px rgba(78, 205, 196, 0.2);
 }
 
+/* Word-by-word bouncing animation for lyrics */
+@keyframes bounceWord {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-8px) scale(1.15);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.25);
+  }
+  70% {
+    transform: translateY(-8px) scale(1.15);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-bounce-word {
+  animation: bounceWord 0.3s ease-in-out;
+}
+
 /* Responsive text sizing */
 @media (max-width: 640px) {
   .responsive-heading {

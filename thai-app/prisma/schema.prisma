@@ -51,9 +51,9 @@ model Video {
 }
 
 model Lyric {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   videoId     String
-  video       Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  video       Video       @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   // Thai lyrics
   thaiText    String
@@ -68,10 +68,35 @@ model Lyric {
   // Line order
   order       Int
 
+  // Word-level timestamps for bouncing animation
+  words       LyricWord[]
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([videoId])
+  @@index([startTime])
+}
+
+model LyricWord {
+  id          String    @id @default(cuid())
+  lyricId     String
+  lyric       Lyric     @relation(fields: [lyricId], references: [id], onDelete: Cascade)
+
+  // Individual word text (Thai or English)
+  text        String
+
+  // Word timing in seconds
+  startTime   Float
+  duration    Float     // Duration of the word
+
+  // Word order within the line
+  order       Int
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([lyricId])
   @@index([startTime])
 }
 

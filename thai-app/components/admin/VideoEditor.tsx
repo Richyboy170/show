@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import YouTube, { YouTubeProps } from "react-youtube";
-import { ArrowLeft, Plus, Save, Trash2, Play, Pause, Sparkles, Music } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Play, Pause, Sparkles, Music, Download } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 
@@ -22,6 +22,7 @@ export default function VideoEditor({ video }: { video: any }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [autoImporting, setAutoImporting] = useState(false);
   const playerRef = useRef<any>(null);
 
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
@@ -66,6 +67,33 @@ export default function VideoEditor({ video }: { video: any }) {
   const deleteLyric = (index: number) => {
     const newLyrics = lyrics.filter((_, i) => i !== index);
     setLyrics(newLyrics);
+  };
+
+  const autoImportLyrics = async () => {
+    if (lyrics.length > 0) {
+      const confirmed = confirm('This will replace all existing lyrics. Are you sure you want to continue?');
+      if (!confirmed) return;
+    }
+
+    setAutoImporting(true);
+    try {
+      const response = await axios.post('/api/lyrics/auto-import', {
+        videoId: video.id
+      });
+
+      if (response.data.success) {
+        alert(`Successfully imported ${response.data.lyricsCount} lyric lines!`);
+        // Reload the page to show the new lyrics
+        router.refresh();
+        window.location.reload();
+      }
+    } catch (error: any) {
+      console.error('Error auto-importing lyrics:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to auto-import lyrics';
+      alert(errorMessage);
+    } finally {
+      setAutoImporting(false);
+    }
   };
 
   const saveLyrics = async () => {
@@ -190,13 +218,24 @@ export default function VideoEditor({ video }: { video: any }) {
               <span className="text-sm font-bold text-gray-700">
                 ⏱️ Current Time: <span className="text-[#4ECDC4]">{currentTime.toFixed(2)}s</span>
               </span>
-              <button
-                onClick={addLyric}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-lg font-bold transform hover:scale-105"
-              >
-                <Plus className="w-4 h-4" />
-                Add Lyric Here
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={autoImportLyrics}
+                  disabled={autoImporting}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFD166] to-[#FFBE76] text-white rounded-lg hover:from-[#FFBE76] hover:to-[#FFD166] transition-all shadow-lg font-bold transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Auto-import lyrics from video transcript"
+                >
+                  <Download className="w-4 h-4" />
+                  {autoImporting ? 'Importing...' : 'Auto-Import'}
+                </button>
+                <button
+                  onClick={addLyric}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-lg font-bold transform hover:scale-105"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Lyric Here
+                </button>
+              </div>
             </div>
           </div>
 

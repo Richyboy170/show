@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Music, Heart } from "lucide-react";
 import Header from "@/components/Header";
+import ExpandableDescription from "@/components/ExpandableDescription";
 
 export default async function Home() {
   const videos = await prisma.video.findMany({
@@ -139,13 +140,15 @@ export default async function Home() {
                     <h3 className="font-bold text-xl text-gray-800 mb-2 line-clamp-2 text-center leading-tight" style={{ fontFamily: 'cursive' }}>
                       {video.title}
                     </h3>
-                    
+
                     {video.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3 text-center italic">
-                        {video.description}
-                      </p>
+                      <ExpandableDescription
+                        description={video.description}
+                        maxLines={2}
+                        className="text-sm text-gray-600 mb-3 text-center italic"
+                      />
                     )}
-                    
+
                     {video.lyrics.length > 0 && (
                       <div className="flex items-center justify-center gap-2 text-white text-sm bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] py-2 px-4 rounded-full shadow-md font-semibold">
                         <Music className="w-4 h-4" />
