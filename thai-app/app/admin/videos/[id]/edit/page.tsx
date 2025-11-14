@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import VideoEditor from "@/components/admin/VideoEditor";
 
-export default async function EditVideoPage({ params }: { params: { id: string } }) {
+export default async function EditVideoPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
 
   // Redirect to sign-in if not authenticated
@@ -17,8 +17,9 @@ export default async function EditVideoPage({ params }: { params: { id: string }
     redirect("/");
   }
 
+  const resolvedParams = await params;
   const video = await prisma.video.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       lyrics: {
         orderBy: {

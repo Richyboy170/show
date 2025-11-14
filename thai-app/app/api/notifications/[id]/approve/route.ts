@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,8 +18,9 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
+    const resolvedParams = await params;
     const notification = await prisma.notification.findUnique({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     });
 
     if (!notification) {
@@ -33,10 +34,12 @@ export async function POST(
       const videoDetails = await fetchVideoDetails(notification.youtubeId);
 
       if (videoDetails) {
+        // Get current admin to track who approved it (optional)
         const admin = await prisma.admin.findUnique({
           where: { email: session.user?.email! }
         });
 
+        // Create video shared among all admins
         await prisma.video.create({
           data: {
             youtubeId: notification.youtubeId,
@@ -46,7 +49,7 @@ export async function POST(
             publishedAt: new Date(videoDetails.publishedAt),
             duration: parseDuration(videoDetails.duration),
             channelTitle: videoDetails.channelTitle,
-            adminId: admin!.id
+            adminId: admin?.id // Optional: track who approved it
           }
         });
       }
@@ -54,7 +57,7 @@ export async function POST(
 
     // Mark notification as approved and read
     await prisma.notification.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         isApproved: true,
         isRead: true

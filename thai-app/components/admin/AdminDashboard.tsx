@@ -138,7 +138,7 @@ export default function AdminDashboard({
             >
               <div className="flex items-center justify-center gap-2">
                 <Music className="w-5 h-5" />
-                <span>My Videos</span>
+                <span>All Videos</span>
               </div>
             </button>
             <button
@@ -179,7 +179,7 @@ export default function AdminDashboard({
               <VideoList videos={videos} onVideoDeleted={handleVideoDeleted} />
             )}
             {activeTab === 'add' && (
-              <AddVideoForm onVideoAdded={handleVideoAdded} adminId={admin.id} />
+              <AddVideoForm onVideoAdded={handleVideoAdded} />
             )}
             {activeTab === 'notifications' && (
               <NotificationPanel

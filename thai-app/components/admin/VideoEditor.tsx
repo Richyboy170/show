@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import YouTube, { YouTubeProps } from "react-youtube";
 import { ArrowLeft, Plus, Save, Trash2, Play, Pause, Sparkles, Music, Download } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
+import ExpandableDescription from "@/components/ExpandableDescription";
 
 interface Lyric {
   id?: string;
   thaiText: string;
   translation: string;
+  chords?: string;
   startTime: number;
   endTime: number;
   order: number;
@@ -23,7 +25,33 @@ export default function VideoEditor({ video }: { video: any }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [saving, setSaving] = useState(false);
   const [autoImporting, setAutoImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importMessage, setImportMessage] = useState('');
+  const [importLogs, setImportLogs] = useState<string[]>([]);
+  const [showChordHelper, setShowChordHelper] = useState<number | null>(null);
   const playerRef = useRef<any>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Common chord progressions and quick access chords
+  const commonChords = [
+    'C', 'D', 'E', 'F', 'G', 'A', 'B',
+    'Am', 'Dm', 'Em', 'Fm', 'Gm', 'Bm',
+    'C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'B7',
+    'Cmaj7', 'Dmaj7', 'Emaj7', 'Fmaj7', 'Gmaj7', 'Amaj7',
+    'Csus4', 'Dsus4', 'Esus4', 'Fsus4', 'Gsus4', 'Asus4'
+  ];
+
+  const chordProgressions = [
+    { name: 'I-V-vi-IV (Pop)', chords: 'C G Am F' },
+    { name: 'I-IV-V (Rock)', chords: 'C F G' },
+    { name: 'ii-V-I (Jazz)', chords: 'Dm G C' },
+    { name: 'I-vi-IV-V (50s)', chords: 'C Am F G' },
+    { name: 'vi-IV-I-V (Modern)', chords: 'Am F C G' },
+    { name: 'I-V-vi-iii-IV', chords: 'C G Am Em F' },
+    { name: 'I-IV-vi-V', chords: 'C F Am G' },
+    { name: 'vi-V-IV-V', chords: 'Am G F G' },
+  ];
 
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
@@ -50,7 +78,8 @@ export default function VideoEditor({ video }: { video: any }) {
     const time = getCurrentTime();
     const newLyric: Lyric = {
       thaiText: "",
-      translation: "",
+      translation: "", // Keep for compatibility with existing data
+      chords: "",
       startTime: time,
       endTime: time + 5,
       order: lyrics.length
@@ -69,6 +98,39 @@ export default function VideoEditor({ video }: { video: any }) {
     setLyrics(newLyrics);
   };
 
+  const addChordToLyric = (index: number, chord: string) => {
+    const currentChords = lyrics[index].chords || '';
+    const newChords = currentChords ? `${currentChords} ${chord}` : chord;
+    updateLyric(index, 'chords', newChords);
+  };
+
+  const copyChordFromPrevious = (index: number) => {
+    if (index > 0) {
+      const previousChords = lyrics[index - 1].chords || '';
+      updateLyric(index, 'chords', previousChords);
+    }
+  };
+
+  const clearChords = (index: number) => {
+    updateLyric(index, 'chords', '');
+  };
+
+  const applyChordToAll = (chords: string) => {
+    const confirmed = confirm(`Apply "${chords}" to all ${lyrics.length} lyric lines?`);
+    if (confirmed) {
+      const newLyrics = lyrics.map(lyric => ({ ...lyric, chords }));
+      setLyrics(newLyrics);
+    }
+  };
+
+  const applyChordToRange = (startIndex: number, endIndex: number, chords: string) => {
+    const newLyrics = [...lyrics];
+    for (let i = startIndex; i <= endIndex && i < newLyrics.length; i++) {
+      newLyrics[i] = { ...newLyrics[i], chords };
+    }
+    setLyrics(newLyrics);
+  };
+
   const autoImportLyrics = async () => {
     if (lyrics.length > 0) {
       const confirmed = confirm('This will replace all existing lyrics. Are you sure you want to continue?');
@@ -76,21 +138,124 @@ export default function VideoEditor({ video }: { video: any }) {
     }
 
     setAutoImporting(true);
+    setImportProgress(0);
+    setImportMessage('Starting...');
+
+    // Generate jobId on client
+    const jobId = `${video.id}-${Date.now()}`;
+
     try {
+      // Start progress polling
+      progressIntervalRef.current = setInterval(async () => {
+        try {
+          const progressResponse = await axios.get(`/api/lyrics/progress?jobId=${jobId}`);
+          setImportProgress(progressResponse.data.progress || 0);
+          setImportMessage(progressResponse.data.message || '');
+          setImportLogs(progressResponse.data.logs || []);
+
+          // Auto-scroll logs to bottom
+          if (logsEndRef.current) {
+            logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        } catch (err) {
+          console.error('Error fetching progress:', err);
+        }
+      }, 500); // Poll every 500ms
+
       const response = await axios.post('/api/lyrics/auto-import', {
-        videoId: video.id
+        videoId: video.id,
+        jobId: jobId // Pass jobId to server
       });
 
+      // Stop polling
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+
       if (response.data.success) {
-        alert(`Successfully imported ${response.data.lyricsCount} lyric lines!`);
-        // Reload the page to show the new lyrics
-        router.refresh();
-        window.location.reload();
+        setImportProgress(100);
+        setImportMessage('Complete!');
+
+        const method = response.data.method === 'whisper' ? 'AI Audio Transcription' : 'YouTube Captions';
+
+        setTimeout(() => {
+          alert(`Successfully imported ${response.data.lyricsCount} lyric lines using ${method}!`);
+          // Reload the page to show the new lyrics
+          router.refresh();
+          window.location.reload();
+        }, 1000);
       }
     } catch (error: any) {
       console.error('Error auto-importing lyrics:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to auto-import lyrics';
-      alert(errorMessage);
+
+      // Stop polling
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+
+      setImportProgress(0);
+      setImportMessage('');
+
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.error || 'Failed to auto-import lyrics';
+      const errorDetails = errorData?.details;
+      const isQuotaError = errorData?.isQuotaError;
+      const suggestion = errorData?.suggestion;
+
+      let displayMessage = `❌ ${errorMessage}`;
+
+      // Handle detailed error object
+      if (errorDetails && typeof errorDetails === 'object') {
+        if (errorDetails.ocr || errorDetails.whisper || errorDetails.captions) {
+          displayMessage += '\n\n🔍 DEBUG INFO:';
+          if (errorDetails.ocr) displayMessage += `\n• OCR: ${errorDetails.ocr}`;
+          if (errorDetails.whisper) displayMessage += `\n• Whisper: ${errorDetails.whisper}`;
+          if (errorDetails.captions) displayMessage += `\n• YouTube Captions: ${errorDetails.captions}`;
+        } else if (errorDetails.message) {
+          displayMessage += `\n\n🔍 Error: ${errorDetails.message}`;
+          if (errorDetails.code) displayMessage += `\nCode: ${errorDetails.code}`;
+        }
+      } else if (typeof errorDetails === 'string') {
+        displayMessage += `\n\n${errorDetails}`;
+      }
+
+      // Check for specific quota errors
+      const quotaErrors = errorData?.errors;
+      if (quotaErrors) {
+        if (quotaErrors.youtubeQuota) {
+          displayMessage += '\n\n⚠️ YOUTUBE API QUOTA EXCEEDED\nYour YouTube API quota limit has been reached.\n\nSolutions:\n1. Wait 24 hours for quota reset\n2. Use a different YouTube API key\n3. Upgrade your quota at Google Cloud Console';
+        }
+        if (quotaErrors.whisperQuota) {
+          displayMessage += '\n\n⚠️ OPENAI API QUOTA EXCEEDED\nYour OpenAI account has run out of credits.\n\nSolutions:\n1. Visit https://platform.openai.com/account/billing\n2. Add credits ($5+ recommended)\n3. Wait for quota reset if on free tier';
+        }
+      }
+
+      // Add suggestion if provided
+      if (suggestion) {
+        displayMessage += `\n\n💡 ${suggestion}`;
+      }
+
+      // Generic quota error handling (fallback)
+      if (isQuotaError || errorMessage.includes('quota') || errorMessage.includes('exceeded')) {
+        if (!quotaErrors) {
+          displayMessage += '\n\n⚠️ API QUOTA/RATE LIMIT ISSUE\nOne of your API services has reached its limit.\n\nCheck:\n• YouTube API quota (Google Cloud Console)\n• OpenAI API credits (platform.openai.com)\n• Network connection';
+        }
+      }
+
+      // Check error message content (convert to string for safety)
+      const errorString = JSON.stringify(errorDetails || errorMessage);
+
+      if (errorString.includes('Transcript is disabled')) {
+        displayMessage += '\n\n❌ This video has captions/subtitles DISABLED on YouTube.\n\nYour options:\n1. Add credits to OpenAI account for AI transcription\n2. Manually add lyrics using the editor below\n3. Choose a video with Thai captions enabled\n4. Enable captions on YouTube first (if you own the video)';
+      } else if (errorString.includes('403') || errorString.includes('ytdl')) {
+        displayMessage += '\n\n❌ YouTube is blocking audio download (403 error).\n\nYour options:\n1. Try a video with captions enabled (faster & more reliable)\n2. Manually add lyrics using the editor below\n3. Wait and try again later (YouTube may be rate-limiting)';
+      } else if (errorMessage.includes('YouTube captions')) {
+        displayMessage += '\n\nSuggestions:\n• Make sure the video has captions enabled on YouTube\n• Try a different video with Thai captions\n• Check that the video is publicly accessible';
+      }
+
+      alert(displayMessage);
     } finally {
       setAutoImporting(false);
     }
@@ -111,6 +276,7 @@ export default function VideoEditor({ video }: { video: any }) {
           videoId: video.id,
           thaiText: lyric.thaiText,
           translation: lyric.translation,
+          chords: lyric.chords,
           startTime: lyric.startTime,
           endTime: lyric.endTime,
           order: i
@@ -128,7 +294,7 @@ export default function VideoEditor({ video }: { video: any }) {
   };
 
   // Update current time periodically
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       if (playerRef.current && isPlaying) {
         setCurrentTime(getCurrentTime());
@@ -136,10 +302,10 @@ export default function VideoEditor({ video }: { video: any }) {
     }, 100);
 
     return () => clearInterval(interval);
-  });
+  }, [isPlaying]);
 
   const opts: YouTubeProps['opts'] = {
-    height: '400',
+    height: '100%',
     width: '100%',
     playerVars: {
       autoplay: 0,
@@ -173,6 +339,7 @@ export default function VideoEditor({ video }: { video: any }) {
               onClick={saveLyrics}
               disabled={saving}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-xl hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all disabled:opacity-50 shadow-lg font-bold transform hover:scale-105"
+              suppressHydrationWarning
             >
               <Save className="w-5 h-5" />
               {saving ? 'Saving...' : 'Save All Lyrics'}
@@ -188,12 +355,16 @@ export default function VideoEditor({ video }: { video: any }) {
             <div className="w-12 h-12 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full flex items-center justify-center flex-shrink-0">
               <Music className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-3xl font-bold text-[#FF6B6B] mb-2" style={{ fontFamily: 'cursive' }}>
                 {video.title}
               </h1>
               {video.description && (
-                <p className="text-gray-600">{video.description}</p>
+                <ExpandableDescription
+                  description={video.description}
+                  maxLines={3}
+                  className="text-gray-600 font-medium"
+                />
               )}
             </div>
           </div>
@@ -206,36 +377,78 @@ export default function VideoEditor({ video }: { video: any }) {
               <Sparkles className="w-6 h-6" />
               Video Player
             </h2>
-            <div className="aspect-video bg-black rounded-xl overflow-hidden mb-4 border-4 border-[#FFBE76] shadow-lg">
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden mb-4 border-4 border-[#FFBE76] shadow-lg">
               <YouTube
                 videoId={video.youtubeId}
                 opts={opts}
                 onReady={onPlayerReady}
                 onStateChange={onPlayerStateChange}
+                className="absolute top-0 left-0 w-full h-full"
+                iframeClassName="w-full h-full"
               />
             </div>
-            <div className="flex items-center justify-between bg-gradient-to-r from-[#95E1D3]/20 to-[#4ECDC4]/20 p-4 rounded-xl border-2 border-[#4ECDC4]">
-              <span className="text-sm font-bold text-gray-700">
-                ⏱️ Current Time: <span className="text-[#4ECDC4]">{currentTime.toFixed(2)}s</span>
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={autoImportLyrics}
-                  disabled={autoImporting}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFD166] to-[#FFBE76] text-white rounded-lg hover:from-[#FFBE76] hover:to-[#FFD166] transition-all shadow-lg font-bold transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Auto-import lyrics from video transcript"
-                >
-                  <Download className="w-4 h-4" />
-                  {autoImporting ? 'Importing...' : 'Auto-Import'}
-                </button>
-                <button
-                  onClick={addLyric}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-lg font-bold transform hover:scale-105"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Lyric Here
-                </button>
+            <div className="bg-gradient-to-r from-[#95E1D3]/20 to-[#4ECDC4]/20 p-4 rounded-xl border-2 border-[#4ECDC4] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-gray-700">
+                  ⏱️ Current Time: <span className="text-[#4ECDC4]">{currentTime.toFixed(2)}s</span>
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={autoImportLyrics}
+                    disabled={autoImporting}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFD166] to-[#FFBE76] text-white rounded-lg hover:from-[#FFBE76] hover:to-[#FFD166] transition-all shadow-lg font-bold transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Auto-import lyrics from video transcript"
+                    suppressHydrationWarning
+                  >
+                    <Download className="w-4 h-4" />
+                    {autoImporting ? 'Importing...' : 'Auto-Import'}
+                  </button>
+                  <button
+                    onClick={addLyric}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-lg font-bold transform hover:scale-105"
+                    suppressHydrationWarning
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Lyric Here
+                  </button>
+                </div>
               </div>
+
+              {/* Progress Bar and Logs */}
+              {autoImporting && (
+                <div className="w-full space-y-3">
+                  {/* Progress Bar */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-gray-600">{importMessage}</span>
+                      <span className="text-xs font-bold text-[#4ECDC4]">{importProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] rounded-full transition-all duration-300 ease-out relative overflow-hidden"
+                        style={{ width: `${importProgress}%` }}
+                      >
+                        <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Logs Display */}
+                  {importLogs.length > 0 && (
+                    <div className="bg-gray-900 rounded-lg p-3 max-h-48 overflow-y-auto font-mono text-xs shadow-inner">
+                      {importLogs.map((log, index) => (
+                        <div
+                          key={index}
+                          className="text-green-400 py-0.5 hover:bg-gray-800 px-2 rounded"
+                        >
+                          {log}
+                        </div>
+                      ))}
+                      <div ref={logsEndRef} />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -274,6 +487,7 @@ export default function VideoEditor({ video }: { video: any }) {
                             onClick={() => seekTo(lyric.startTime)}
                             className="p-2 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-lg hover:from-[#95E1D3] hover:to-[#4ECDC4] transition-all shadow-md transform hover:scale-110"
                             title="Jump to this lyric"
+                            suppressHydrationWarning
                           >
                             <Play className="w-4 h-4" />
                           </button>
@@ -285,6 +499,7 @@ export default function VideoEditor({ video }: { video: any }) {
                           onClick={() => deleteLyric(index)}
                           className="p-2 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white rounded-lg hover:from-[#FFA07A] hover:to-[#FF6B6B] transition-all shadow-md transform hover:scale-110"
                           title="Delete lyric"
+                          suppressHydrationWarning
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -298,23 +513,139 @@ export default function VideoEditor({ video }: { video: any }) {
                           <textarea
                             value={lyric.thaiText}
                             onChange={(e) => updateLyric(index, 'thaiText', e.target.value)}
-                            className="w-full px-3 py-2 border-[3px] border-[#4ECDC4] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none thai-text text-lg bg-[#4ECDC4]/5"
+                            className="w-full px-3 py-2 border-[3px] border-[#4ECDC4] rounded-xl focus:ring-4 focus:ring-[#4ECDC4] focus:border-[#4ECDC4] outline-none thai-text text-lg bg-[#4ECDC4]/5 text-gray-900"
                             rows={2}
                             placeholder="ใส่เนื้อเพลงภาษาไทย..."
                           />
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-[#FFD166] mb-1 uppercase">
-                            🇬🇧 Translation
-                          </label>
-                          <textarea
-                            value={lyric.translation}
-                            onChange={(e) => updateLyric(index, 'translation', e.target.value)}
-                            className="w-full px-3 py-2 border-[3px] border-[#FFD166] rounded-xl focus:ring-4 focus:ring-[#FFD166] focus:border-[#FFD166] outline-none bg-[#FFD166]/5"
-                            rows={2}
-                            placeholder="Enter English translation..."
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-bold text-[#95E1D3] uppercase">
+                              🎸 Chords
+                            </label>
+                            <div className="flex gap-2">
+                              {index > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => copyChordFromPrevious(index)}
+                                  className="text-xs px-2 py-1 bg-[#FFD166] text-white rounded-md hover:bg-[#FFBE76] transition-colors font-semibold"
+                                  title="Copy chords from previous line"
+                                >
+                                  Copy ↑
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setShowChordHelper(showChordHelper === index ? null : index)}
+                                className="text-xs px-2 py-1 bg-[#95E1D3] text-white rounded-md hover:bg-[#4ECDC4] transition-colors font-semibold"
+                              >
+                                {showChordHelper === index ? 'Hide Helper' : 'Show Helper'}
+                              </button>
+                              {lyric.chords && (
+                                <button
+                                  type="button"
+                                  onClick={() => clearChords(index)}
+                                  className="text-xs px-2 py-1 bg-[#FF6B6B] text-white rounded-md hover:bg-[#FFA07A] transition-colors font-semibold"
+                                  title="Clear all chords"
+                                >
+                                  Clear
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            value={lyric.chords || ''}
+                            onChange={(e) => updateLyric(index, 'chords', e.target.value)}
+                            className="w-full px-3 py-2 border-[3px] border-[#95E1D3] rounded-xl focus:ring-4 focus:ring-[#95E1D3] focus:border-[#95E1D3] outline-none bg-[#95E1D3]/5 text-gray-900 font-mono"
+                            placeholder="C G Am F..."
                           />
+
+                          {/* Chord Helper Panel */}
+                          {showChordHelper === index && (
+                            <div className="mt-3 p-4 bg-gradient-to-br from-[#95E1D3]/10 to-[#4ECDC4]/10 rounded-xl border-2 border-[#95E1D3] space-y-4">
+                              {/* Major Chords */}
+                              <div>
+                                <p className="text-xs font-bold text-[#4ECDC4] mb-2 uppercase">⭐ Major Chords:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {['C', 'D', 'E', 'F', 'G', 'A', 'B'].map((chord) => (
+                                    <button
+                                      key={chord}
+                                      type="button"
+                                      onClick={() => addChordToLyric(index, chord)}
+                                      className="px-3 py-1.5 bg-white border-2 border-[#95E1D3] text-[#4ECDC4] rounded-lg hover:bg-[#95E1D3] hover:text-white transition-all font-bold text-sm shadow-sm hover:shadow-md transform hover:scale-105"
+                                    >
+                                      {chord}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Minor Chords */}
+                              <div>
+                                <p className="text-xs font-bold text-[#4ECDC4] mb-2 uppercase">🌙 Minor Chords:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {['Am', 'Dm', 'Em', 'Fm', 'Gm', 'Bm'].map((chord) => (
+                                    <button
+                                      key={chord}
+                                      type="button"
+                                      onClick={() => addChordToLyric(index, chord)}
+                                      className="px-3 py-1.5 bg-white border-2 border-[#FF6B6B] text-[#FF6B6B] rounded-lg hover:bg-[#FF6B6B] hover:text-white transition-all font-bold text-sm shadow-sm hover:shadow-md transform hover:scale-105"
+                                    >
+                                      {chord}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* 7th & Extended Chords */}
+                              <div>
+                                <p className="text-xs font-bold text-[#4ECDC4] mb-2 uppercase">🎵 7th & Extended:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {['C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'Cmaj7', 'Dmaj7', 'Emaj7', 'Gmaj7', 'Csus4', 'Dsus4', 'Gsus4'].map((chord) => (
+                                    <button
+                                      key={chord}
+                                      type="button"
+                                      onClick={() => addChordToLyric(index, chord)}
+                                      className="px-2.5 py-1.5 bg-white border-2 border-[#FFD166] text-[#FFD166] rounded-lg hover:bg-[#FFD166] hover:text-white transition-all font-bold text-xs shadow-sm hover:shadow-md transform hover:scale-105"
+                                    >
+                                      {chord}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Common Progressions */}
+                              <div className="pt-2 border-t-2 border-[#95E1D3]/30">
+                                <p className="text-xs font-bold text-[#4ECDC4] mb-2 uppercase">🎸 Replace with Progression:</p>
+                                <div className="grid grid-cols-1 gap-1.5">
+                                  {chordProgressions.map((prog) => (
+                                    <button
+                                      key={prog.name}
+                                      type="button"
+                                      onClick={() => updateLyric(index, 'chords', prog.chords)}
+                                      className="w-full px-3 py-2 bg-white border-2 border-[#FFD166] text-gray-700 rounded-lg hover:bg-[#FFD166] hover:text-white transition-all font-mono text-sm text-left shadow-sm hover:shadow-md flex items-center justify-between group"
+                                    >
+                                      <span className="font-bold group-hover:text-white">{prog.chords}</span>
+                                      <span className="text-xs text-gray-500 group-hover:text-white/80">{prog.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Quick Tips */}
+                              <div className="pt-2 border-t-2 border-[#95E1D3]/30 text-xs text-gray-600 space-y-1">
+                                <p className="font-semibold text-[#4ECDC4]">💡 Tips:</p>
+                                <ul className="list-disc list-inside space-y-0.5 ml-2">
+                                  <li>Click chords to add them one by one</li>
+                                  <li>Click progressions to replace all chords</li>
+                                  <li>Use "Copy ↑" for repeating sections</li>
+                                  <li>Type custom chords directly in the input</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -328,8 +659,9 @@ export default function VideoEditor({ video }: { video: any }) {
                               step="0.1"
                               value={lyric.startTime}
                               onChange={(e) => updateLyric(index, 'startTime', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border-[3px] border-[#FF6B6B] rounded-xl focus:ring-4 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none font-bold bg-[#FF6B6B]/5"
+                              className="w-full px-3 py-2 border-[3px] border-[#FF6B6B] rounded-xl focus:ring-4 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] outline-none font-bold bg-[#FF6B6B]/5 text-gray-900"
                               aria-label="Start time in seconds"
+                              suppressHydrationWarning
                             />
                           </div>
                           <div>
@@ -342,8 +674,9 @@ export default function VideoEditor({ video }: { video: any }) {
                               step="0.1"
                               value={lyric.endTime}
                               onChange={(e) => updateLyric(index, 'endTime', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border-[3px] border-[#FFA07A] rounded-xl focus:ring-4 focus:ring-[#FFA07A] focus:border-[#FFA07A] outline-none font-bold bg-[#FFA07A]/5"
+                              className="w-full px-3 py-2 border-[3px] border-[#FFA07A] rounded-xl focus:ring-4 focus:ring-[#FFA07A] focus:border-[#FFA07A] outline-none font-bold bg-[#FFA07A]/5 text-gray-900"
                               aria-label="End time in seconds"
+                              suppressHydrationWarning
                             />
                           </div>
                         </div>

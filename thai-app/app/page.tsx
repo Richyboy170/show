@@ -45,43 +45,43 @@ export default async function Home() {
       <Header />
 
       {/* Hero Section - Party header with teddy bear theme */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-        <div className="text-center mb-16 relative">
-          <div className="inline-block bg-white p-10 shadow-2xl rounded-3xl border-4 border-[#FFD166]" style={{ transform: 'rotate(-0.5deg)' }}>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 relative z-10">
+        <div className="text-center mb-8 sm:mb-16 relative">
+          <div className="inline-block bg-white p-6 sm:p-10 shadow-2xl rounded-2xl sm:rounded-3xl border-4 border-[#FFD166]" style={{ transform: 'rotate(-0.5deg)' }}>
             {/* Corner decorations - like paper lanterns */}
-            <div className="absolute -top-4 -left-4 w-8 h-8 bg-[#4ECDC4] rounded-full shadow-lg"></div>
-            <div className="absolute -top-4 -right-4 w-8 h-8 bg-[#FF6B6B] rounded-full shadow-lg"></div>
-            <div className="absolute -bottom-4 -left-4 w-8 h-8 bg-[#FFA07A] rounded-full shadow-lg"></div>
-            <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-[#95E1D3] rounded-full shadow-lg"></div>
-            
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3" style={{ fontFamily: 'cursive' }}>
-              Featured Songs
+            <div className="absolute -top-3 -left-3 w-6 h-6 sm:-top-4 sm:-left-4 sm:w-8 sm:h-8 bg-[#4ECDC4] rounded-full shadow-lg"></div>
+            <div className="absolute -top-3 -right-3 w-6 h-6 sm:-top-4 sm:-right-4 sm:w-8 sm:h-8 bg-[#FF6B6B] rounded-full shadow-lg"></div>
+            <div className="absolute -bottom-3 -left-3 w-6 h-6 sm:-bottom-4 sm:-left-4 sm:w-8 sm:h-8 bg-[#FFA07A] rounded-full shadow-lg"></div>
+            <div className="absolute -bottom-3 -right-3 w-6 h-6 sm:-bottom-4 sm:-right-4 sm:w-8 sm:h-8 bg-[#95E1D3] rounded-full shadow-lg"></div>
+
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-3 sm:mb-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3" style={{ fontFamily: 'cursive' }}>
+              <span>Featured Songs</span>
               <Heart className="w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 text-[#FF6B6B] fill-[#FF6B6B] animate-pulse" />
             </h2>
-            <p className="text-lg sm:text-xl md:text-2xl text-gray-700 italic mb-3">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-700 italic mb-2 sm:mb-3 px-2">
               Lovingly translated by Josie ✨
             </p>
-            <div className="flex justify-center gap-3 mt-5">
-              <div className="w-3 h-3 bg-[#FFD166] rounded-full animate-bounce-1"></div>
-              <div className="w-3 h-3 bg-[#FF6B6B] rounded-full animate-bounce-2"></div>
-              <div className="w-3 h-3 bg-[#4ECDC4] rounded-full animate-bounce-3"></div>
-              <div className="w-3 h-3 bg-[#FFA07A] rounded-full animate-bounce-4"></div>
-              <div className="w-3 h-3 bg-[#95E1D3] rounded-full animate-bounce-5"></div>
+            <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-5">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#FFD166] rounded-full animate-bounce-1"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#FF6B6B] rounded-full animate-bounce-2"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#4ECDC4] rounded-full animate-bounce-3"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#FFA07A] rounded-full animate-bounce-4"></div>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-[#95E1D3] rounded-full animate-bounce-5"></div>
             </div>
           </div>
         </div>
 
         {/* Videos Grid - Polaroid/Party Scrapbook style */}
         {videos.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl shadow-2xl p-12 border-4 border-[#FFD166]" style={{ transform: 'rotate(-0.5deg)' }}>
-            <Music className="w-24 h-24 text-[#4ECDC4] mx-auto mb-6" />
-            <p className="text-gray-700 text-2xl font-bold mb-2" style={{ fontFamily: 'cursive' }}>
+          <div className="text-center py-12 sm:py-20 bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 border-4 border-[#FFD166]" style={{ transform: 'rotate(-0.5deg)' }}>
+            <Music className="w-16 h-16 sm:w-24 sm:h-24 text-[#4ECDC4] mx-auto mb-4 sm:mb-6" />
+            <p className="text-gray-700 text-xl sm:text-2xl font-bold mb-2" style={{ fontFamily: 'cursive' }}>
               Party is ready! 🎉
             </p>
-            <p className="text-gray-500 mt-2">Add your first song to start the celebration</p>
+            <p className="text-gray-500 mt-2 text-sm sm:text-base">Add your first song to start the celebration</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
             {videos.map((video: any, index: number) => {
               const rotations = ['-rotate-2', 'rotate-1', '-rotate-1', 'rotate-2', '-rotate-3', 'rotate-1'];
               const rotation = rotations[index % rotations.length];
@@ -110,22 +110,23 @@ export default async function Home() {
                 <Link
                   key={video.id}
                   href={`/watch/${video.youtubeId}`}
-                  className={`group bg-white p-5 shadow-2xl hover:shadow-party-hover transition-all transform hover:scale-110 hover:rotate-0 hover:z-10 ${rotation} border-8 ${borderColor} relative`}
+                  className={`group bg-white p-4 sm:p-5 shadow-2xl hover:shadow-party-hover transition-all transform hover:scale-105 sm:hover:scale-110 hover:rotate-0 hover:z-10 ${rotation} border-4 sm:border-8 ${borderColor} relative`}
                 >
                   {/* Washi tape effect - colorful */}
-                  <div 
-                    className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-8 bg-gradient-to-r from-[#FFD166]/70 via-white/50 to-[#FFD166]/70 border-t-2 border-b-2 border-[#FFD166]/40 shadow-md" 
+                  <div
+                    className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2 w-20 h-6 sm:w-24 sm:h-8 bg-gradient-to-r from-[#FFD166]/70 via-white/50 to-[#FFD166]/70 border-t-2 border-b-2 border-[#FFD166]/40 shadow-md"
                     style={{ transform: 'translateX(-50%) rotate(-3deg)' }}
                   >
                     <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(255,255,255,0.3)_2px,rgba(255,255,255,0.3)_4px)]"></div>
                   </div>
-                  
-                  <div className="relative aspect-video bg-gray-50 mb-5 overflow-hidden rounded-lg shadow-inner">
+
+                  <div className="relative aspect-video bg-gray-50 mb-4 sm:mb-5 overflow-hidden rounded-lg shadow-inner">
                     {video.thumbnailUrl ? (
                       <Image
                         src={video.thumbnailUrl}
                         alt={video.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -136,8 +137,8 @@ export default async function Home() {
                   </div>
                   
                   {/* Polaroid caption area */}
-                  <div className="bg-white pt-2 pb-4 px-2">
-                    <h3 className="font-bold text-xl text-gray-800 mb-2 line-clamp-2 text-center leading-tight" style={{ fontFamily: 'cursive' }}>
+                  <div className="bg-white pt-2 pb-3 sm:pb-4 px-2">
+                    <h3 className="font-bold text-lg sm:text-xl text-gray-800 mb-2 line-clamp-2 text-center leading-tight" style={{ fontFamily: 'cursive' }}>
                       {video.title}
                     </h3>
 
@@ -145,25 +146,25 @@ export default async function Home() {
                       <ExpandableDescription
                         description={video.description}
                         maxLines={2}
-                        className="text-sm text-gray-600 mb-3 text-center italic"
+                        className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 text-center italic"
                       />
                     )}
 
                     {video.lyrics.length > 0 && (
-                      <div className="flex items-center justify-center gap-2 text-white text-sm bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] py-2 px-4 rounded-full shadow-md font-semibold">
-                        <Music className="w-4 h-4" />
+                      <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] py-1.5 sm:py-2 px-3 sm:px-4 rounded-full shadow-md font-semibold">
+                        <Music className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>Lyrics Available!</span>
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Decorative corner sticker - matching lantern colors */}
-                  <div className={`absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br ${stickerColor} rounded-full shadow-xl flex items-center justify-center transform rotate-12 border-2 border-white`}>
-                    <Heart className="w-5 h-5 text-white fill-white" />
+                  <div className={`absolute -top-2 sm:-top-3 -right-2 sm:-right-3 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br ${stickerColor} rounded-full shadow-xl flex items-center justify-center transform rotate-12 border-2 border-white`}>
+                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-white" />
                   </div>
-                  
+
                   {/* Additional cute dot decoration */}
-                  <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-white rounded-full shadow-md border-[3px] border-gray-100"></div>
+                  <div className="absolute -bottom-1.5 sm:-bottom-2 -left-1.5 sm:-left-2 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow-md border-2 sm:border-[3px] border-gray-100"></div>
                 </Link>
               );
             })}

@@ -40,9 +40,10 @@ model Video {
   // User favorites
   favorites       Favorite[]
 
-  // Admin who added/manages this video
-  adminId         String
-  admin           Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  // Admin who added this video (optional, for tracking purposes only)
+  // All admins can edit any video regardless of who added it
+  adminId         String?
+  admin           Admin?    @relation(fields: [adminId], references: [id], onDelete: SetNull)
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -60,6 +61,9 @@ model Lyric {
 
   // English translation (optional)
   translation String?
+
+  // Chords (optional) - e.g., "C G Am F"
+  chords      String?
 
   // Timing in seconds (start and end time)
   startTime   Float

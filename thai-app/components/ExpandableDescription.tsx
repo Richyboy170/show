@@ -21,17 +21,16 @@ export default function ExpandableDescription({
   const shouldShowToggle = description.length > 100;
 
   return (
-    <div className={className}>
+    <div className={className} suppressHydrationWarning>
       <p
-        className={`whitespace-pre-wrap ${
-          !isExpanded && shouldShowToggle ? `line-clamp-${maxLines}` : ''
-        } ${isExpanded ? expandedClassName : ''}`}
+        className={`whitespace-pre-wrap ${isExpanded ? expandedClassName : ''}`}
         style={!isExpanded && shouldShowToggle ? {
           display: '-webkit-box',
           WebkitLineClamp: maxLines,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden'
         } : {}}
+        suppressHydrationWarning
       >
         {description}
       </p>
@@ -43,6 +42,7 @@ export default function ExpandableDescription({
             setIsExpanded(!isExpanded);
           }}
           className="text-sm font-semibold text-gray-600 hover:text-gray-800 mt-1 transition-colors"
+          suppressHydrationWarning
         >
           {isExpanded ? 'Show less' : '...more'}
         </button>

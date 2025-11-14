@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { videoId, thaiText, translation, startTime, endTime, order } = body;
+    const { videoId, thaiText, translation, chords, startTime, endTime, order } = body;
 
     if (!videoId || !thaiText || startTime === undefined || endTime === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         videoId,
         thaiText,
         translation: translation || null,
+        chords: chords || null,
         startTime: parseFloat(startTime),
         endTime: parseFloat(endTime),
         order: order || 0
@@ -53,7 +54,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, thaiText, translation, startTime, endTime, order } = body;
+    const { id, thaiText, translation, chords, startTime, endTime, order } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Lyric ID is required" }, { status: 400 });
@@ -64,6 +65,7 @@ export async function PUT(request: Request) {
       data: {
         ...(thaiText && { thaiText }),
         ...(translation !== undefined && { translation }),
+        ...(chords !== undefined && { chords }),
         ...(startTime !== undefined && { startTime: parseFloat(startTime) }),
         ...(endTime !== undefined && { endTime: parseFloat(endTime) }),
         ...(order !== undefined && { order })

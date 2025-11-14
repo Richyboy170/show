@@ -1,52 +1,78 @@
-# CLAUDE.md - Project Preferences & Architecture
+# CLAUDE.md - Thai Lyrics Website Quick Reference
 
-## Project Overview
+## 1. Quick Start Commands
 
-**Name**: Thai Lyrics Website (thai-lyrics-app)
-**Purpose**: A personalized lyrics website for Josie Tso's YouTube channel (@josietso), featuring synchronized Thai lyrics with English translations
-**Type**: Full-stack Next.js web application with admin dashboard and user features
+### Continue Work on the Project
+```bash
+# Navigate to project directory
+cd "C:\Users\HP\Desktop\Special Code\show\thai-app"
 
-## Tech Stack
+# Install dependencies (if needed)
+npm install
 
-### Core
-- **Next.js 15** with App Router (React 19)
-- **TypeScript** (strict mode)
-- **Node.js** (ES2017 target)
+# Start development server
+npm run dev
 
-### Database & ORM
-- **Prisma ORM** v5.22.0
-- **SQLite** (development) - migrate to PostgreSQL/MySQL for production
-- Database location: `/prisma/dev.db`
+# Open in browser: http://localhost:3000
+```
 
-### Authentication
-- **NextAuth.js** v4.24.7 with Prisma adapter
-- **bcryptjs** for password hashing
-- Dual auth: Google OAuth + email/password credentials
+### Database Management
+```bash
+# Push schema changes to database
+npm run db:push
 
-### Styling & UI
-- **Tailwind CSS** v3.4.15 with custom party theme
-- **PostCSS** with autoprefixer
-- **Lucide React** for icons
-- **Google Fonts**: Noto Sans Thai for Thai language support
+# Open Prisma Studio (database GUI)
+npm run db:studio
 
-### External Services
-- **YouTube Data API v3** for video metadata
-- **react-youtube** v10.1.0 for embedded playback
-- **axios** v1.7.7 for HTTP requests
-- **youtube-transcript** v1.2.1 for fetching transcripts
+# Setup admin user
+npm run setup:admin
+```
 
-### Development
-- **ESLint** with Next.js configuration
-- **tsx** for TypeScript script execution
-- **Prisma Studio** for database management
+### Production Commands
+```bash
+# Build for production
+npm run build
 
-## Project Structure
+# Start production server
+npm run start
 
+# Run linter
+npm run lint
+```
+
+### Ngrok (Expose Local Server)
+```bash
+# Expose local development server to internet (useful for OAuth testing)
+ngrok http 3000
+
+# With custom domain (requires ngrok paid plan)
+ngrok http 3000 --domain=your-domain.ngrok-free.app
+
+# After running ngrok:
+# 1. Copy the forwarding URL (e.g., https://abc123.ngrok-free.app)
+# 2. Update NEXTAUTH_URL in .env.local with the ngrok URL
+# 3. Add the ngrok URL to Google OAuth authorized redirect URIs
+# 4. Restart your dev server (npm run dev)
+```
+
+---
+
+## 2. Architectural Structure
+
+### Tech Stack
+- **Framework**: Next.js 15 with App Router (React 19)
+- **Language**: TypeScript (strict mode)
+- **Database**: Prisma ORM v5.22.0 + SQLite (dev) → PostgreSQL/MySQL (production)
+- **Authentication**: NextAuth.js v4.24.7 (Google OAuth + email/password)
+- **Styling**: Tailwind CSS v3.4.15 with custom party theme
+- **External APIs**: YouTube Data API v3, youtube-transcript
+
+### Project Structure
 ```
 /thai-app/
 ├── app/                          # Next.js App Router
-│   ├── api/                      # API Routes (RESTful)
-│   │   ├── auth/[...nextauth]/   # NextAuth handlers
+│   ├── api/                      # API Routes (RESTful endpoints)
+│   │   ├── auth/[...nextauth]/   # NextAuth authentication handlers
 │   │   ├── videos/               # Video CRUD operations
 │   │   ├── lyrics/               # Lyrics CRUD operations
 │   │   ├── favorites/            # User favorites management
@@ -55,437 +81,478 @@
 │   ├── admin/                    # Admin dashboard pages
 │   │   └── videos/[id]/edit/     # Video lyrics editor
 │   ├── auth/                     # Authentication pages
-│   │   ├── signin/               # Sign-in page
-│   │   └── error/                # Auth error page
 │   ├── watch/[id]/               # Video player page
 │   ├── favorites/                # User favorites page
 │   ├── page.tsx                  # Home page
-│   ├── layout.tsx                # Root layout
-│   ├── providers.tsx             # SessionProvider wrapper
-│   └── globals.css               # Global styles
+│   └── layout.tsx                # Root layout
 ├── components/
-│   ├── admin/                    # Admin components
+│   ├── admin/                    # Admin-only components
 │   │   ├── AdminDashboard.tsx    # Main admin dashboard
 │   │   ├── AddVideoForm.tsx      # Add video form
 │   │   ├── VideoList.tsx         # Video management list
-│   │   ├── VideoEditor.tsx       # Lyrics editor
-│   │   └── NotificationPanel.tsx # Channel notifications
+│   │   ├── VideoEditor.tsx       # Lyrics editor with drag-drop
+│   │   └── NotificationPanel.tsx # New video notifications
 │   ├── lyrics/
 │   │   └── VideoPlayer.tsx       # Synchronized video player
-│   └── Header.tsx                # Global header component
+│   └── Header.tsx                # Global navigation header
 ├── lib/
 │   ├── auth.ts                   # NextAuth configuration
 │   ├── prisma.ts                 # Prisma client singleton
 │   └── youtube.ts                # YouTube API utilities
 ├── prisma/
-│   └── schema.prisma             # Database schema
+│   ├── schema.prisma             # Database schema
+│   └── dev.db                    # SQLite database file
 ├── scripts/
-│   └── setup-admin.ts            # Admin setup script
-├── types/
-│   └── next-auth.d.ts            # NextAuth type extensions
-└── Configuration files
+│   └── setup-admin.ts            # Admin initialization script
+└── types/
+    └── next-auth.d.ts            # NextAuth type extensions
 ```
 
-## Database Schema
+### Database Schema Overview
+```
+Admin (manages videos)
+├── videos (one-to-many)
+└── notifications (one-to-many)
 
-### Core Models
+User (regular visitors)
+└── favorites (one-to-many)
 
-**Admin**
-- Manages site content and videos
-- Fields: id, email, name, googleId, password (hashed), image, timestamps
-- Relations: videos (one-to-many), notifications (one-to-many)
+Video (YouTube videos with lyrics)
+├── lyrics (one-to-many, cascade delete)
+├── favorites (one-to-many, cascade delete)
+└── admin (many-to-one)
 
-**User**
-- Regular site visitors (non-admin)
-- Fields: id, email, name, image, googleId, timestamps
-- Relations: favorites (one-to-many)
+Lyric (time-synchronized lines)
+└── video (many-to-one, cascade delete)
 
-**Video**
-- YouTube videos with lyrics
-- Fields: youtubeId (unique), title, description, thumbnailUrl, publishedAt, duration, channelTitle
-- Relations: admin (many-to-one), lyrics (one-to-many), favorites (one-to-many)
-- Cascade delete: lyrics and favorites removed when video deleted
+Favorite (user's saved videos)
+├── user (many-to-one, cascade delete)
+└── video (many-to-one, cascade delete)
 
-**Lyric**
-- Time-synchronized lyric lines
-- Fields: thaiText, translation, startTime, endTime, order
-- Relations: video (many-to-one, cascade delete)
-- Ordering: by order field ASC
+ChannelMonitor (YouTube channel tracking)
+└── Single instance per channel
 
-**Favorite**
-- User's favorite videos
-- Compound unique constraint: userId + videoId
-- Relations: user, video (both with cascade delete)
-
-**ChannelMonitor**
-- YouTube channel monitoring configuration
-- Fields: channelId (unique), channelHandle, channelTitle, lastChecked, lastVideoId, lastVideoPublishedAt
-- Single instance per channel
-
-**Notification**
-- Admin notifications for new videos
-- Fields: type, title, message, youtubeId, isRead, isApproved, metadata (JSON)
-- Relations: admin (many-to-one, cascade delete)
-
-## API Architecture
-
-### RESTful Patterns
-All API routes follow REST conventions with proper HTTP methods:
-
-**Videos** (`/api/videos`)
-- `GET /api/videos` - List all videos
-- `POST /api/videos` - Create video (admin only)
-- `GET /api/videos/[id]` - Get single video
-- `PUT /api/videos/[id]` - Update video (admin only)
-- `DELETE /api/videos/[id]` - Delete video (admin only)
-
-**Lyrics** (`/api/lyrics`)
-- `POST /api/lyrics` - Create lyric line
-- `PUT /api/lyrics` - Update lyric line
-- `DELETE /api/lyrics?id={id}` - Delete lyric line
-
-**Favorites** (`/api/favorites`)
-- `GET /api/favorites` - Get user's favorites
-- `POST /api/favorites` - Add to favorites
-- `DELETE /api/favorites?videoId={id}` - Remove from favorites
-- `GET /api/favorites/check?videoId={id}` - Check if favorited
-
-**Notifications** (`/api/notifications`)
-- `POST /api/notifications/[id]/approve` - Approve new video notification
-- `POST /api/notifications/[id]/reject` - Reject notification
-- `POST /api/notifications/[id]/read` - Mark as read
-
-**YouTube** (`/api/youtube`)
-- `POST /api/youtube/check-channel` - Check for new videos on monitored channel
-
-### Authentication Strategy
-- **Admin Authentication**: Google OAuth OR email/password credentials
-- **User Authentication**: Google OAuth only
-- **Role Determination**: By email match with `ADMIN_EMAIL` environment variable
-- **Session Strategy**: JWT-based (no database sessions)
-- **Protection**: All API routes check session with `getServerSession`
-
-## Architectural Patterns
-
-### 1. Server-Side Rendering (SSR)
-- Pages use server components by default
-- Data fetching with Prisma on server
-- Authentication checked server-side
-- SEO-friendly content rendering
-
-### 2. Client Components
-- Use `'use client'` directive for interactive components
-- State management with React hooks (useState, useEffect)
-- Real-time updates with polling intervals
-- Optimistic UI updates
-
-### 3. Database Access
-- **Singleton Pattern**: Single Prisma client instance via `lib/prisma.ts`
-- **Cascade Deletes**: Automatic cleanup of related data
-- **Eager Loading**: Include relations in queries to prevent N+1 problems
-- **Indexing**: Unique constraints on frequently queried fields
-
-### 4. Error Handling
-- Comprehensive console logging with context
-- Try-catch blocks in all API routes
-- User-friendly error messages
-- NextResponse with appropriate status codes
-
-### 5. YouTube Integration
-- Video ID extraction from multiple URL formats
-- ISO 8601 duration parsing
-- Channel monitoring with notification system
-- API quota management (10,000 units/day)
-- Error logging for API failures
-
-## Design System
-
-### Color Palette (Party Theme)
-```css
-coral: #FF6B6B     /* Primary actions */
-salmon: #FFA07A    /* Accent */
-teal: #4ECDC4      /* Secondary */
-mint: #95E1D3      /* Accent */
-gold: #FFD166      /* Highlights */
-peach: #FFBE76     /* Accent */
+Notification (admin alerts for new videos)
+└── admin (many-to-one, cascade delete)
 ```
 
-### Visual Design Patterns
-- **Polaroid/Scrapbook Style**: Rotated cards with borders, washi tape effects
-- **Lantern Decorations**: Floating colored circles throughout pages
-- **Gradient Buttons**: Multi-color gradients for CTAs
-- **Shadow System**: Custom party shadows with colored layers (`shadow-party`)
-- **Responsive**: Mobile-first design with Tailwind breakpoints
+### Authentication Flow
+1. **Admin**: Identified by `ADMIN_EMAIL` environment variable
+   - Can use Google OAuth OR email/password credentials
+   - Full access to video/lyrics management
+2. **Users**: Regular visitors
+   - Google OAuth only
+   - Can favorite videos, read-only access
 
-### Typography
-- **Primary**: Geist Sans (system font)
-- **Monospace**: Geist Mono
-- **Thai Text**: Noto Sans Thai (loaded globally)
-- **Headings**: Cursive font for playful feel
+### API Architecture
+All routes follow RESTful conventions:
+- **GET**: Retrieve data
+- **POST**: Create new resources
+- **PUT**: Update existing resources
+- **DELETE**: Remove resources
 
-### Animations
-- Bounce animations with delays for decorative elements
-- Pulse for active/loading states
-- Smooth transitions: `transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)`
-- Scale transforms on hover
+All API routes protected with `getServerSession(authOptions)` checks.
 
-## Development Preferences
+---
 
-### Code Style
-- **TypeScript**: Strict mode enabled, explicit types preferred
-- **File Naming**: kebab-case for files, PascalCase for React components
-- **Path Aliases**: `@/*` maps to project root
-- **Formatting**: Consistent indentation, no trailing semicolons in JSX
-- **Component Structure**: Props interface at top, component below
+## 3. Every Function in Detail
 
-### Naming Conventions
-- **Components**: PascalCase (e.g., `VideoPlayer.tsx`)
-- **Utilities**: camelCase (e.g., `youtube.ts`)
-- **API Routes**: kebab-case segments (e.g., `check-channel`)
-- **Database Models**: PascalCase singular (e.g., `Video`, `Lyric`)
-- **Environment Variables**: SCREAMING_SNAKE_CASE
+### Core API Endpoints
 
-### Component Patterns
+#### **Videos API** (`/api/videos`)
+
+**GET /api/videos**
+- **Purpose**: List all videos with lyrics
+- **Auth**: Required (any authenticated user)
+- **Returns**: Array of videos with admin info
+- **Query**: Includes related admin data
+- **Order**: Most recent first (`publishedAt: 'desc'`)
+
+**POST /api/videos**
+- **Purpose**: Create new video entry
+- **Auth**: Admin only
+- **Body**: `{ youtubeId, title?, description?, thumbnailUrl?, duration?, publishedAt?, channelTitle? }`
+- **Process**:
+  1. Validate session + admin role
+  2. Extract YouTube ID from URL if needed
+  3. Fetch metadata from YouTube API if minimal data provided
+  4. Create video in database linked to admin
+- **Returns**: Created video object
+
+**GET /api/videos/[id]**
+- **Purpose**: Get single video with full details
+- **Auth**: Required
+- **Returns**: Video with lyrics (ordered by `order` ASC) and admin info
+
+**PUT /api/videos/[id]**
+- **Purpose**: Update video metadata
+- **Auth**: Admin only
+- **Body**: `{ title?, description?, thumbnailUrl?, duration?, publishedAt?, channelTitle? }`
+- **Process**: Updates video fields, preserves existing lyrics
+- **Returns**: Updated video object
+
+**DELETE /api/videos/[id]**
+- **Purpose**: Delete video and all related data
+- **Auth**: Admin only
+- **Process**: Cascade deletes lyrics and favorites automatically
+- **Returns**: Success message
+
+---
+
+#### **Lyrics API** (`/api/lyrics`)
+
+**POST /api/lyrics**
+- **Purpose**: Add new lyric line to video
+- **Auth**: Admin only
+- **Body**: `{ videoId, thaiText, translation, startTime, endTime, order }`
+- **Process**:
+  1. Validate all required fields
+  2. Create lyric linked to video
+- **Returns**: Created lyric object
+
+**PUT /api/lyrics**
+- **Purpose**: Update existing lyric line
+- **Auth**: Admin only
+- **Body**: `{ id, thaiText?, translation?, startTime?, endTime?, order? }`
+- **Process**: Updates specified fields only
+- **Returns**: Updated lyric object
+
+**DELETE /api/lyrics?id={id}**
+- **Purpose**: Remove lyric line
+- **Auth**: Admin only
+- **Query Param**: `id` (lyric ID)
+- **Returns**: Success message
+
+---
+
+#### **Favorites API** (`/api/favorites`)
+
+**GET /api/favorites**
+- **Purpose**: Get current user's favorite videos
+- **Auth**: User only (non-admin)
+- **Process**:
+  1. Find User record by email (creates if doesn't exist)
+  2. Query favorites with video details
+- **Returns**: Array of favorited videos
+
+**POST /api/favorites**
+- **Purpose**: Add video to user's favorites
+- **Auth**: User only (non-admin)
+- **Body**: `{ videoId }`
+- **Process**:
+  1. Find/create User record
+  2. Create favorite with compound unique constraint (userId + videoId)
+- **Returns**: Created favorite object
+
+**DELETE /api/favorites?videoId={id}**
+- **Purpose**: Remove video from favorites
+- **Auth**: User only (non-admin)
+- **Query Param**: `videoId`
+- **Process**: Deletes favorite record
+- **Returns**: Success message
+
+**GET /api/favorites/check?videoId={id}**
+- **Purpose**: Check if video is in user's favorites
+- **Auth**: User only (non-admin)
+- **Query Param**: `videoId`
+- **Returns**: `{ isFavorite: boolean }`
+
+---
+
+#### **Notifications API** (`/api/notifications`)
+
+**POST /api/notifications/[id]/approve**
+- **Purpose**: Approve new video notification and import video
+- **Auth**: Admin only
+- **Process**:
+  1. Mark notification as approved
+  2. Extract YouTube ID from metadata
+  3. Create new video entry
+  4. Link to admin account
+- **Returns**: Created video object
+
+**POST /api/notifications/[id]/reject**
+- **Purpose**: Reject and dismiss notification
+- **Auth**: Admin only
+- **Process**: Deletes notification record
+- **Returns**: Success message
+
+**POST /api/notifications/[id]/read**
+- **Purpose**: Mark notification as read
+- **Auth**: Admin only
+- **Process**: Sets `isRead: true`
+- **Returns**: Updated notification
+
+---
+
+#### **YouTube API** (`/api/youtube`)
+
+**POST /api/youtube/check-channel**
+- **Purpose**: Check monitored channel for new videos
+- **Auth**: Admin only
+- **Process**:
+  1. Fetch channel monitor record
+  2. Query YouTube API for latest video
+  3. Compare with `lastVideoId`
+  4. Create notification if new video found
+  5. Update monitor with new `lastVideoId` and `lastChecked`
+- **Returns**: `{ newVideo: boolean, notification?: object }`
+- **Quota**: Uses 100 units per check
+
+---
+
+### Key Components
+
+#### **AdminDashboard** (`components/admin/AdminDashboard.tsx`)
+- **Purpose**: Main admin control panel
+- **Features**:
+  - Display video count and recent activity
+  - Notification panel integration
+  - Navigation to video management
+- **State**: Session-based admin check
+- **Polling**: Checks for new notifications every 60 seconds
+
+#### **AddVideoForm** (`components/admin/AddVideoForm.tsx`)
+- **Purpose**: Form to add new videos
+- **Features**:
+  - YouTube URL input (auto-extracts ID)
+  - Optional metadata override
+  - Automatic YouTube API metadata fetch
+  - Form validation
+- **State**: Form data, loading, error states
+- **Submission**: POST to `/api/videos`
+
+#### **VideoList** (`components/admin/VideoList.tsx`)
+- **Purpose**: Display and manage all videos
+- **Features**:
+  - Grid/list view of videos
+  - Edit button (links to lyrics editor)
+  - Delete button with confirmation
+  - Thumbnail display
+- **State**: Videos array, loading state
+- **Actions**: DELETE `/api/videos/[id]`
+
+#### **VideoEditor** (`components/admin/VideoEditor.tsx`)
+- **Purpose**: Edit video metadata and lyrics
+- **Features**:
+  - Video metadata editing form
+  - Lyrics editor with drag-drop reordering
+  - Add new lyric lines
+  - Edit existing lyrics inline
+  - Delete lyric lines
+  - Live preview with video player
+  - Time input helpers (MM:SS format)
+- **State**: Video, lyrics array, edit modes
+- **Actions**: PUT `/api/videos/[id]`, POST/PUT/DELETE `/api/lyrics`
+
+#### **NotificationPanel** (`components/admin/NotificationPanel.tsx`)
+- **Purpose**: Display and manage new video notifications
+- **Features**:
+  - Badge counter for unread notifications
+  - Dropdown panel with notification list
+  - Approve button (imports video)
+  - Reject button (dismisses)
+  - Mark as read
+- **State**: Notifications array, panel open/closed
+- **Polling**: Refreshes every 60 seconds
+- **Actions**: POST to `/api/notifications/[id]/{approve|reject|read}`
+
+#### **VideoPlayer** (`components/lyrics/VideoPlayer.tsx`)
+- **Purpose**: Synchronized video playback with lyrics
+- **Features**:
+  - YouTube iframe embed
+  - Real-time lyric highlighting based on playback time
+  - Auto-scroll to active lyric
+  - Click lyric to jump to timestamp
+  - Thai text + English translation display
+- **State**: Current time, active lyric index, player ready
+- **Update Rate**: Checks time every 100ms
+- **Logic**: Finds lyric where `currentTime >= startTime && currentTime < endTime`
+
+#### **Header** (`components/Header.tsx`)
+- **Purpose**: Global navigation and user menu
+- **Features**:
+  - Logo/home link
+  - Admin dashboard link (admin only)
+  - Favorites link (users only)
+  - User profile dropdown
+  - Sign in/out buttons
+- **State**: Session data from NextAuth
+- **Conditional Rendering**: Based on user role (admin vs user)
+
+---
+
+### Utility Functions
+
+#### **YouTube Utilities** (`lib/youtube.ts`)
+
+**extractYouTubeId(url: string): string | null**
+- **Purpose**: Extract video ID from various YouTube URL formats
+- **Supports**:
+  - `youtube.com/watch?v=ID`
+  - `youtu.be/ID`
+  - `youtube.com/embed/ID`
+  - Direct ID input
+- **Returns**: 11-character video ID or null
+
+**fetchYouTubeVideoData(videoId: string): Promise<VideoData>**
+- **Purpose**: Fetch video metadata from YouTube API
+- **Process**:
+  1. Call YouTube Data API v3 videos.list
+  2. Parse response for title, description, thumbnail, duration, published date
+  3. Convert ISO 8601 duration to seconds
+- **Returns**: Video metadata object
+- **Error Handling**: Logs errors, throws for API failures
+
+**parseDuration(isoDuration: string): number**
+- **Purpose**: Convert ISO 8601 duration to seconds
+- **Example**: `PT3M45S` → 225 seconds
+- **Regex**: Extracts hours, minutes, seconds
+- **Returns**: Total duration in seconds
+
+**checkChannelForNewVideos(): Promise<NewVideoData | null>**
+- **Purpose**: Check monitored channel for new uploads
+- **Process**:
+  1. Query channel's uploads playlist
+  2. Get latest video
+  3. Compare with stored `lastVideoId`
+- **Returns**: New video data or null if no changes
+- **Quota**: 100 units per call
+
+---
+
+#### **Prisma Client** (`lib/prisma.ts`)
+
+**prisma (singleton)**
+- **Purpose**: Single Prisma client instance across app
+- **Pattern**: Prevents multiple connections in dev mode
+- **Implementation**: Stores client in `globalThis` during development
+- **Production**: Creates new client per deployment
+
+---
+
+#### **Auth Configuration** (`lib/auth.ts`)
+
+**authOptions (NextAuth config)**
+- **Providers**:
+  1. **Google OAuth**: For both admin and users
+  2. **Credentials**: Email/password for admin only
+- **Callbacks**:
+  - `signIn`: Determines role based on `ADMIN_EMAIL` match
+  - `jwt`: Adds `isAdmin` flag to token
+  - `session`: Exposes `isAdmin` to client
+- **Adapter**: Prisma adapter (uses Admin/User models)
+- **Session**: JWT strategy (no database sessions)
+- **Pages**: Custom sign-in page at `/auth/signin`
+
+---
+
+### Database Operations
+
+#### **Cascade Delete Behavior**
+- **Video deleted** → All lyrics + favorites deleted automatically
+- **Admin deleted** → All videos, notifications deleted (chain reaction)
+- **User deleted** → All favorites deleted
+
+#### **Query Optimization Patterns**
 ```typescript
-// Prefer this structure:
-'use client';
-
-import { useState } from 'react';
-
-interface ComponentProps {
-  prop1: string;
-  prop2: number;
-}
-
-export default function ComponentName({ prop1, prop2 }: ComponentProps) {
-  const [state, setState] = useState<Type>(initialValue);
-
-  // Event handlers
-  const handleEvent = () => {
-    // logic
-  };
-
-  return (
-    // JSX
-  );
-}
-```
-
-### API Route Patterns
-```typescript
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
-
-export async function GET(request: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Logic here
-
-    return NextResponse.json({ data });
-  } catch (error) {
-    console.error('Error context:', error);
-    return NextResponse.json(
-      { error: 'Error message' },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### Database Query Patterns
-```typescript
-// Prefer including relations inline
+// Always include relations needed
 const video = await prisma.video.findUnique({
   where: { id },
   include: {
-    lyrics: {
-      orderBy: { order: 'asc' }
-    },
-    admin: {
-      select: { name: true, email: true }
-    }
+    lyrics: { orderBy: { order: 'asc' } },
+    admin: { select: { name: true, email: true } }
   }
 });
 
-// Use select for performance when not all fields needed
+// Use select for minimal data
 const videos = await prisma.video.findMany({
-  select: {
-    id: true,
-    title: true,
-    thumbnailUrl: true
-  },
+  select: { id: true, title: true, thumbnailUrl: true },
   orderBy: { publishedAt: 'desc' }
 });
 ```
 
-## Key Features
+---
 
-### 1. Synchronized Lyrics Playback
-- Real-time lyric highlighting during video playback
-- Auto-scroll to active lyric line
-- Click lyric to jump to specific timestamp
-- Smooth transitions between lyric lines
+### Environment Configuration
 
-### 2. Admin Dashboard
-- Video management (add, edit, delete)
-- Lyrics editor with live preview
-- Drag-and-drop lyric reordering
-- YouTube channel monitoring
-- Notification panel for new videos
-- One-click video import from notifications
-
-### 3. YouTube Channel Monitoring
-- Automatic detection of new videos on monitored channel
-- Notification system for admin approval
-- Scheduled checks (can be manual or automated)
-- Video metadata pre-fetched for quick import
-
-### 4. User Features
-- Favorites system (for non-admin users only)
-- Gallery view with all videos
-- Individual video watch pages
-- Google OAuth sign-in
-
-### 5. Role-Based Access Control
-- Admin: Full CRUD on videos and lyrics
-- Users: Read-only access, favorites management
-- Admin identification by email match
-
-## Environment Variables
-
+Required variables in `.env.local`:
 ```bash
 # Database
-DATABASE_URL="file:./dev.db"  # SQLite for dev
+DATABASE_URL="file:./dev.db"
 
-# NextAuth Configuration
-NEXTAUTH_URL="http://localhost:3000"  # Update for production
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="<generate-with-openssl-rand-base64-32>"
 
-# Google OAuth (from Google Cloud Console)
-GOOGLE_CLIENT_ID="<your-client-id>.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="<your-client-secret>"
+# Google OAuth
+GOOGLE_CLIENT_ID="<from-google-cloud-console>"
+GOOGLE_CLIENT_SECRET="<from-google-cloud-console>"
 
-# Admin Credentials
-ADMIN_EMAIL="<admin-email@example.com>"  # Determines admin role
-ADMIN_PASSWORD="<secure-password>"       # For credential auth
+# Admin
+ADMIN_EMAIL="<your-admin-email>"
+ADMIN_PASSWORD="<hashed-by-bcrypt>"
 
-# YouTube API (from Google Cloud Console)
-YOUTUBE_API_KEY="<your-youtube-api-key>"
-YOUTUBE_CHANNEL_ID="<optional-channel-id-for-monitoring>"
+# YouTube API
+YOUTUBE_API_KEY="<from-google-cloud-console>"
+YOUTUBE_CHANNEL_ID="<optional-for-monitoring>"
 ```
-
-## Scripts & Commands
-
-```bash
-# Development
-npm run dev              # Start dev server (localhost:3000)
-npm run build            # Production build
-npm run start            # Start production server
-npm run lint             # Run ESLint
-
-# Database
-npm run db:push          # Push schema changes to database
-npm run db:studio        # Open Prisma Studio (localhost:5555)
-npm run postinstall      # Generate Prisma client (auto-runs)
-
-# Setup
-npm run setup:admin      # Initialize admin user and channel monitor
-```
-
-## Deployment Considerations
-
-### Production Checklist
-- [ ] Migrate from SQLite to PostgreSQL or MySQL
-- [ ] Update `DATABASE_URL` in environment variables
-- [ ] Set `NEXTAUTH_URL` to production domain
-- [ ] Update Google OAuth redirect URIs in Google Cloud Console
-- [ ] Configure secure `NEXTAUTH_SECRET`
-- [ ] Set up cron job or scheduled function for YouTube monitoring
-- [ ] Enable environment variable protection
-
-### Recommended Platforms
-1. **Vercel** (optimal for Next.js)
-2. Netlify
-3. Railway (includes database)
-4. Render
-5. AWS Amplify
-
-### Database Migration
-```prisma
-// Update prisma/schema.prisma datasource:
-datasource db {
-  provider = "postgresql"  // or "mysql"
-  url      = env("DATABASE_URL")
-}
-```
-
-## Important Notes
-
-### Thai Language Support
-- Noto Sans Thai font loaded globally in layout
-- Ensure proper character encoding (UTF-8)
-- Test Thai text rendering on all browsers
-
-### YouTube API Limitations
-- Free tier: 10,000 quota units/day
-- Video list API: 100 units per request
-- Video details: 1 unit per video
-- Monitor quota in Google Cloud Console
-
-### SQLite Limitations
-- Single file database
-- Not suitable for high concurrency
-- No concurrent writes
-- Switch to PostgreSQL/MySQL for production
-
-### Security Considerations
-- Admin role based on email match (ensure `ADMIN_EMAIL` is secure)
-- Passwords hashed with bcryptjs (10 rounds)
-- All API routes protected with session checks
-- No sensitive data in client-side code
-- Image optimization with Next.js Image component
-
-### Performance Optimizations
-- Server-side rendering for SEO
-- Image optimization with Next.js Image
-- YouTube thumbnails cached
-- Database queries optimized with indexes
-- Prisma query optimization with select/include
-
-## Special Patterns to Follow
-
-1. **Always check authentication** in API routes before processing
-2. **Use cascade deletes** to maintain referential integrity
-3. **Log errors comprehensively** with context for debugging
-4. **Validate user input** before database operations
-5. **Handle YouTube API errors gracefully** with fallbacks
-6. **Maintain consistent error response format** across API routes
-7. **Use TypeScript strict mode** and avoid `any` types
-8. **Prefer server components** unless interactivity required
-9. **Test with Thai characters** to ensure proper rendering
-10. **Keep admin features separate** from user features
-
-## Future Enhancements (Ideas)
-
-- [ ] Add testing suite (Jest/Vitest)
-- [ ] Implement search functionality
-- [ ] Add lyrics export feature
-- [ ] Support multiple languages beyond Thai/English
-- [ ] User playlists
-- [ ] Comments system
-- [ ] Social sharing
-- [ ] PWA support for offline access
-- [ ] Analytics dashboard for admin
 
 ---
 
-**Last Updated**: 2025-11-12
-**Project Status**: Active Development
-**Target Audience**: Thai music enthusiasts, Josie Tso's YouTube community
+### Design System
+
+**Color Palette (Party Theme)**
+- `coral: #FF6B6B` - Primary actions
+- `salmon: #FFA07A` - Accent
+- `teal: #4ECDC4` - Secondary
+- `mint: #95E1D3` - Accent
+- `gold: #FFD166` - Highlights
+- `peach: #FFBE76` - Accent
+
+**Visual Elements**
+- Polaroid/scrapbook-style cards with rotation
+- Floating lantern decorations (bounce animations)
+- Custom `shadow-party` utility class
+- Gradient buttons with multiple colors
+- Washi tape effects on cards
+
+**Typography**
+- Primary: Geist Sans
+- Monospace: Geist Mono
+- Thai: Noto Sans Thai (loaded globally)
+
+---
+
+## Important Development Notes
+
+### Code Patterns to Follow
+1. Always check authentication in API routes before processing
+2. Use TypeScript strict mode, avoid `any` types
+3. Prefer server components unless interactivity required
+4. Include relations in Prisma queries to prevent N+1 problems
+5. Log errors comprehensively with context
+6. Test with Thai characters to ensure proper rendering
+
+### Security Considerations
+- Admin role determined by `ADMIN_EMAIL` match
+- Passwords hashed with bcryptjs (10 rounds)
+- All API routes protected with session checks
+- No sensitive data in client-side code
+
+### YouTube API Quota
+- Free tier: 10,000 units/day
+- Video list: 100 units per request
+- Video details: 1 unit per video
+- Monitor usage in Google Cloud Console
+
+### Database Limitations (SQLite in dev)
+- Single file database
+- No concurrent writes
+- Switch to PostgreSQL/MySQL for production
+
+---
+
+**Last Updated**: 2025-11-13
+**Project**: Thai Lyrics Website for Josie Tso (@josietso)
+**Status**: Active Development

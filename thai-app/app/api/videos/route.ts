@@ -19,9 +19,9 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { youtubeUrl, adminId } = body;
+    const { youtubeUrl } = body;
 
-    console.log('[VIDEO API] Request received:', { youtubeUrl, adminId, user: session.user.email });
+    console.log('[VIDEO API] Request received:', { youtubeUrl, user: session.user.email });
 
     if (!youtubeUrl) {
       console.error('[VIDEO API] YouTube URL is missing');
@@ -75,7 +75,12 @@ export async function POST(request: Request) {
       channelTitle: videoDetails.channelTitle
     });
 
-    // Create video in database
+    // Get current admin's ID to track who added the video
+    const currentAdmin = await prisma.admin.findUnique({
+      where: { email: session.user.email! }
+    });
+
+    // Create video in database (shared among all admins)
     const video = await prisma.video.create({
       data: {
         youtubeId: videoId,
@@ -85,7 +90,7 @@ export async function POST(request: Request) {
         publishedAt: new Date(videoDetails.publishedAt),
         duration: parseDuration(videoDetails.duration),
         channelTitle: videoDetails.channelTitle,
-        adminId: adminId
+        adminId: currentAdmin?.id // Optional: track who added it
       },
       include: {
         lyrics: true

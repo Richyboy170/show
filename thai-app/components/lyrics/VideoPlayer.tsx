@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import YouTube, { YouTubeProps } from "react-youtube";
-import { ArrowLeft, Music, Heart, Sparkles } from "lucide-react";
+import { ArrowLeft, Music, Heart, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import ExpandableDescription from "@/components/ExpandableDescription";
 
 interface LyricWord {
@@ -19,6 +20,7 @@ interface Lyric {
   id: string;
   thaiText: string;
   translation: string | null;
+  chords?: string | null;
   startTime: number;
   endTime: number;
   order: number;
@@ -35,11 +37,13 @@ interface Video {
 
 export default function VideoPlayer({ video }: { video: Video }) {
   const { data: session } = useSession();
+  const router = useRouter();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const playerRef = useRef<any>(null);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -97,9 +101,15 @@ export default function VideoPlayer({ video }: { video: Video }) {
     }
   };
 
-  const toggleFavorite = async () => {
-    if (!session) return;
+  const handleFavoriteClick = () => {
+    if (!session) {
+      setShowSignInPrompt(true);
+      return;
+    }
+    toggleFavorite();
+  };
 
+  const toggleFavorite = async () => {
     setIsLoadingFavorite(true);
     try {
       if (isFavorited) {
@@ -151,69 +161,67 @@ export default function VideoPlayer({ video }: { video: Video }) {
 
       {/* Header */}
       <header className="relative bg-white/95 backdrop-blur-md shadow-lg border-b-4 border-[#FF6B6B] sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4">
           <Link
             href="/"
-            className="flex items-center gap-2 text-gray-700 hover:text-[#FF6B6B] transition-colors font-semibold rounded-lg px-3 py-2 hover:bg-[#FFD166]/10"
+            className="flex items-center gap-1.5 sm:gap-2 text-gray-700 hover:text-[#FF6B6B] transition-colors font-semibold rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-[#FFD166]/10 text-sm sm:text-base"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Back to Home</span>
           </Link>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 relative z-10">
         {/* Video Title */}
-        <div className="mb-8 bg-white rounded-2xl shadow-xl p-6 border-4 border-[#4ECDC4]">
-          <div className="flex items-start gap-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Music className="w-7 h-7 text-white" />
+        <div className="mb-4 sm:mb-6 lg:mb-8 bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 border-4 border-[#4ECDC4]">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Music className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-[#FF6B6B] mb-2" style={{ fontFamily: 'cursive' }}>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-[#FF6B6B] mb-1 sm:mb-2" style={{ fontFamily: 'cursive' }}>
                 {video.title}
               </h1>
               {video.description && (
                 <ExpandableDescription
                   description={video.description}
                   maxLines={3}
-                  className="text-gray-700 font-medium"
+                  className="text-sm sm:text-base text-gray-700 font-medium"
                 />
               )}
             </div>
-            {session ? (
-              <button
-                onClick={toggleFavorite}
-                disabled={isLoadingFavorite}
-                className={`flex-shrink-0 transition-all transform hover:scale-110 ${
-                  isLoadingFavorite ? 'opacity-50 cursor-not-allowed' : ''
+            <button
+              onClick={handleFavoriteClick}
+              disabled={isLoadingFavorite}
+              className={`flex-shrink-0 transition-all transform hover:scale-110 ${
+                isLoadingFavorite ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              title={!session ? "Sign in to add to favorites" : isFavorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart
+                className={`w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ${
+                  session && isFavorited
+                    ? 'text-[#FF6B6B] fill-[#FF6B6B] animate-pulse'
+                    : 'text-gray-400 hover:text-[#FF6B6B]'
                 }`}
-              >
-                <Heart
-                  className={`w-10 h-10 ${
-                    isFavorited
-                      ? 'text-[#FF6B6B] fill-[#FF6B6B] animate-pulse'
-                      : 'text-gray-400 hover:text-[#FF6B6B]'
-                  }`}
-                />
-              </button>
-            ) : (
-              <Heart className="w-8 h-8 text-gray-400 flex-shrink-0" />
-            )}
+              />
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
           {/* Video Player */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-4 border-[#FFD166]">
-              <div className="aspect-video bg-black">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden border-4 border-[#FFD166]">
+              <div className="relative aspect-video bg-black">
                 <YouTube
                   videoId={video.youtubeId}
                   opts={opts}
                   onReady={onPlayerReady}
                   onStateChange={onPlayerStateChange}
-                  className="w-full h-full"
+                  className="absolute top-0 left-0 w-full h-full"
+                  iframeClassName="w-full h-full"
                 />
               </div>
             </div>
@@ -221,25 +229,25 @@ export default function VideoPlayer({ video }: { video: Video }) {
 
           {/* Lyrics Panel */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 sticky top-24 max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col border-4 border-[#FFA07A]">
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-[#FF6B6B]" style={{ fontFamily: 'cursive' }}>
-                <div className="w-8 h-8 bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A] rounded-full flex items-center justify-center">
-                  <Music className="w-5 h-5 text-white" />
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 lg:sticky lg:top-24 max-h-[500px] lg:max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col border-4 border-[#FFA07A]">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-[#FF6B6B]" style={{ fontFamily: 'cursive' }}>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A] rounded-full flex items-center justify-center">
+                  <Music className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
                 Lyrics
-                <Sparkles className="w-5 h-5 text-[#FFD166]" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD166]" />
               </h2>
 
               {video.lyrics.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center bg-gradient-to-br from-[#4ECDC4]/10 to-[#95E1D3]/10 rounded-2xl p-8 border-4 border-dashed border-[#4ECDC4]">
-                    <div className="relative inline-block mb-4">
-                      <div className="w-20 h-20 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full flex items-center justify-center">
-                        <Music className="w-10 h-10 text-white" />
+                  <div className="text-center bg-gradient-to-br from-[#4ECDC4]/10 to-[#95E1D3]/10 rounded-xl sm:rounded-2xl p-6 sm:p-8 border-4 border-dashed border-[#4ECDC4]">
+                    <div className="relative inline-block mb-3 sm:mb-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full flex items-center justify-center">
+                        <Music className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                       </div>
-                      <Sparkles className="w-6 h-6 text-[#FFD166] absolute -top-2 -right-2" />
+                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFD166] absolute -top-2 -right-2" />
                     </div>
-                    <p className="text-gray-600 font-bold text-lg" style={{ fontFamily: 'cursive' }}>
+                    <p className="text-gray-600 font-bold text-base sm:text-lg" style={{ fontFamily: 'cursive' }}>
                       No lyrics yet! 🎵
                     </p>
                   </div>
@@ -247,7 +255,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
               ) : (
                 <div
                   ref={lyricsContainerRef}
-                  className="flex-1 overflow-y-auto space-y-3 pr-2"
+                  className="flex-1 overflow-y-auto space-y-2 sm:space-y-3 pr-1 sm:pr-2"
                 >
                   {video.lyrics.map((lyric, index) => {
                     const isActive = currentLyricIndex === index;
@@ -277,27 +285,37 @@ export default function VideoPlayer({ video }: { video: Video }) {
                         key={lyric.id}
                         id={`lyric-${index}`}
                         onClick={() => seekToLyric(lyric.startTime)}
-                        className={`p-4 rounded-xl cursor-pointer transition-all duration-300 border-[3px] ${borderColor} ${bgColor} hover:shadow-lg ${
-                          isActive ? 'shadow-xl scale-105 ring-4 ring-[#FF6B6B]/20' : ''
+                        className={`p-3 sm:p-4 rounded-lg sm:rounded-xl cursor-pointer transition-all duration-300 border-2 sm:border-[3px] ${borderColor} ${bgColor} hover:shadow-lg ${
+                          isActive ? 'shadow-xl scale-105 ring-2 sm:ring-4 ring-[#FF6B6B]/20' : ''
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white px-3 py-1 rounded-full">
+                        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                          <span className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
                             {Math.floor(lyric.startTime / 60)}:{(lyric.startTime % 60).toFixed(0).padStart(2, '0')}
                           </span>
                           {isActive && (
-                            <div className="flex gap-1">
-                              <div className="w-2 h-2 bg-[#FF6B6B] rounded-full animate-pulse-delay-1"></div>
-                              <div className="w-2 h-2 bg-[#FFD166] rounded-full animate-pulse-delay-2"></div>
-                              <div className="w-2 h-2 bg-[#4ECDC4] rounded-full animate-pulse-delay-3"></div>
+                            <div className="flex gap-0.5 sm:gap-1">
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#FF6B6B] rounded-full animate-pulse-delay-1"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#FFD166] rounded-full animate-pulse-delay-2"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#4ECDC4] rounded-full animate-pulse-delay-3"></div>
                             </div>
                           )}
                         </div>
+                        {/* Chords display */}
+                        {lyric.chords && (
+                          <div className="mb-2">
+                            <p className={`font-mono font-bold ${isActive ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'} ${
+                              isActive ? 'text-[#FFD166]' : 'text-[#4ECDC4]'
+                            }`}>
+                              {lyric.chords}
+                            </p>
+                          </div>
+                        )}
                         {lyric.words && lyric.words.length > 0 ? (
                           <p
-                            className={`thai-text mb-2 font-bold ${
-                              isActive ? 'text-2xl' : 'text-lg'
-                            } ${textColor} flex flex-wrap gap-1`}
+                            className={`thai-text mb-1.5 sm:mb-2 font-bold ${
+                              isActive ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
+                            } ${textColor} flex flex-wrap gap-0.5 sm:gap-1`}
                             style={isActive ? { fontFamily: 'cursive' } : {}}
                           >
                             {lyric.words.map((word) => {
@@ -321,8 +339,8 @@ export default function VideoPlayer({ video }: { video: Video }) {
                           </p>
                         ) : (
                           <p
-                            className={`thai-text mb-2 font-bold ${
-                              isActive ? 'text-2xl' : 'text-lg'
+                            className={`thai-text mb-1.5 sm:mb-2 font-bold ${
+                              isActive ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
                             } ${textColor}`}
                             style={isActive ? { fontFamily: 'cursive' } : {}}
                           >
@@ -331,7 +349,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
                         )}
                         {lyric.translation && (
                           <p
-                            className={`text-sm font-semibold ${subTextColor}`}
+                            className={`text-xs sm:text-sm font-semibold ${subTextColor}`}
                           >
                             {lyric.translation}
                           </p>
@@ -345,6 +363,88 @@ export default function VideoPlayer({ video }: { video: Video }) {
           </div>
         </div>
       </div>
+
+      {/* Cute Sign-In Prompt Modal */}
+      {showSignInPrompt && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn"
+          onClick={() => setShowSignInPrompt(false)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative border-4 border-[#FF6B6B] animate-bounceIn"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: 'bounceIn 0.5s ease-out' }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowSignInPrompt(false)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-[#FF6B6B] transition-colors"
+              aria-label="Close sign-in prompt"
+              title="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Decorative corner stickers */}
+            <div className="absolute -top-3 -left-3 w-10 h-10 bg-gradient-to-br from-[#FFD166] to-[#FFBE76] rounded-full shadow-lg flex items-center justify-center transform rotate-12 border-2 border-white">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-gradient-to-br from-[#4ECDC4] to-[#95E1D3] rounded-full shadow-lg flex items-center justify-center transform -rotate-12 border-2 border-white">
+              <Music className="w-5 h-5 text-white" />
+            </div>
+
+            {/* Content */}
+            <div className="text-center mt-2">
+              {/* Big heart icon */}
+              <div className="mb-4 relative inline-block">
+                <div className="w-20 h-20 bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A] rounded-full flex items-center justify-center shadow-xl">
+                  <Heart className="w-10 h-10 text-white fill-white animate-pulse" />
+                </div>
+                {/* Sparkle decorations */}
+                <Sparkles className="w-6 h-6 text-[#FFD166] absolute -top-2 -right-2 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                <Sparkles className="w-5 h-5 text-[#4ECDC4] absolute -bottom-1 -left-1 animate-pulse" style={{ animationDelay: '0.4s' }} />
+              </div>
+
+              {/* Cute message */}
+              <h3 className="text-2xl sm:text-3xl font-bold text-[#FF6B6B] mb-3" style={{ fontFamily: 'cursive' }}>
+                Oops! Almost there!
+              </h3>
+              <p className="text-base sm:text-lg text-gray-700 mb-2 font-semibold">
+                You need to sign in to save your favorite songs!
+              </p>
+              <p className="text-sm sm:text-base text-gray-600 mb-6 italic">
+                Join the party and keep all your favorites in one place!
+              </p>
+
+              {/* Decorative dots */}
+              <div className="flex justify-center gap-2 mb-6">
+                <div className="w-2 h-2 bg-[#FF6B6B] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-[#FFD166] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-[#4ECDC4] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-[#FFA07A] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+                <div className="w-2 h-2 bg-[#95E1D3] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => router.push('/auth/signin')}
+                  className="flex-1 bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center justify-center gap-2"
+                >
+                  <Heart className="w-5 h-5" />
+                  <span>Sign In Now!</span>
+                </button>
+                <button
+                  onClick={() => setShowSignInPrompt(false)}
+                  className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 px-6 rounded-full shadow hover:shadow-lg hover:bg-gray-200 transition-all"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

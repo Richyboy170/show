@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,8 +18,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
+    const resolvedParams = await params;
     await prisma.video.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     });
 
     return NextResponse.json({ success: true });
@@ -31,11 +32,12 @@ export async function DELETE(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const video = await prisma.video.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         lyrics: {
           orderBy: {
@@ -58,7 +60,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -71,11 +73,12 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
+    const resolvedParams = await params;
     const body = await request.json();
     const { title, description } = body;
 
     const video = await prisma.video.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         title,
         description
