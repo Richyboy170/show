@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom animations for party theme */
+@keyframes bounce-1 {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes bounce-2 {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes bounce-3 {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes bounce-4 {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes bounce-5 {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.animate-bounce-1 {
+    animation: bounce-1 1.5s ease-in-out infinite;
+    animation-delay: 0s;
+}
+
+.animate-bounce-2 {
+    animation: bounce-2 1.5s ease-in-out infinite;
+    animation-delay: 0.1s;
+}
+
+.animate-bounce-3 {
+    animation: bounce-3 1.5s ease-in-out infinite;
+    animation-delay: 0.2s;
+}
+
+.animate-bounce-4 {
+    animation: bounce-4 1.5s ease-in-out infinite;
+    animation-delay: 0.3s;
+}
+
+.animate-bounce-5 {
+    animation: bounce-5 1.5s ease-in-out infinite;
+    animation-delay: 0.4s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.animate-bounceIn {
+    animation: bounceIn 0.5s ease-out;
+}
+
+/* Sheet music active state */
+.sheet-music-active svg {
+    filter: drop-shadow(0 0 2px rgba(255, 107, 107, 0.5));
+}
