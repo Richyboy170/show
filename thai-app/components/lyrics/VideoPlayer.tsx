@@ -7,6 +7,10 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ExpandableDescription from "@/components/ExpandableDescription";
+import dynamic from 'next/dynamic';
+
+// Dynamically import SheetMusic (client-only)
+const SheetMusic = dynamic(() => import('@/components/SheetMusic'), { ssr: false });
 
 interface LyricWord {
   id: string;
@@ -21,6 +25,8 @@ interface Lyric {
   thaiText: string;
   translation: string | null;
   chords?: string | null;
+  pianoNotes?: string | null;
+  section?: string | null;
   startTime: number;
   endTime: number;
   order: number;
@@ -44,8 +50,11 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
   const playerRef = useRef<any>(null);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
+  const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isProgrammaticScrollRef = useRef(false);
 
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     playerRef.current = event.target;
@@ -53,6 +62,16 @@ export default function VideoPlayer({ video }: { video: Video }) {
 
   const onPlayerStateChange: YouTubeProps['onStateChange'] = (event) => {
     setIsPlaying(event.data === 1); // 1 = playing
+  };
+
+  // Detect manual scroll and disable auto-scroll (only if user initiated)
+  const handleLyricsScroll = () => {
+    // Ignore programmatic scrolls
+    if (isProgrammaticScrollRef.current) {
+      return;
+    }
+    // User is manually scrolling
+    setAutoScroll(false);
   };
 
   // Check if video is favorited on mount
@@ -64,6 +83,9 @@ export default function VideoPlayer({ video }: { video: Video }) {
         .catch(err => console.error('Error checking favorite:', err));
     }
   }, [session, video.id]);
+
+  // Track last scrolled index to avoid repeated scrolls
+  const lastScrolledIndexRef = useRef<number>(-1);
 
   // Update current time and find active lyric
   useEffect(() => {
@@ -79,20 +101,27 @@ export default function VideoPlayer({ video }: { video: Video }) {
       );
       setCurrentLyricIndex(index);
 
-      // Auto-scroll to current lyric
-      if (index !== -1 && lyricsContainerRef.current) {
+      // Auto-scroll to current lyric (only if autoScroll is enabled and lyric changed)
+      if (autoScroll && index !== -1 && index !== lastScrolledIndexRef.current && lyricsContainerRef.current) {
         const lyricElement = document.getElementById(`lyric-${index}`);
         if (lyricElement) {
+          lastScrolledIndexRef.current = index;
+          // Mark as programmatic scroll
+          isProgrammaticScrollRef.current = true;
           lyricElement.scrollIntoView({
             behavior: 'smooth',
-            block: 'center'
+            block: 'start'
           });
+          // Reset flag after scroll animation completes
+          setTimeout(() => {
+            isProgrammaticScrollRef.current = false;
+          }, 500);
         }
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isPlaying, video.lyrics]);
+  }, [isPlaying, video.lyrics, autoScroll]);
 
   const seekToLyric = (startTime: number) => {
     if (playerRef.current) {
@@ -194,26 +223,24 @@ export default function VideoPlayer({ video }: { video: Video }) {
             <button
               onClick={handleFavoriteClick}
               disabled={isLoadingFavorite}
-              className={`flex-shrink-0 transition-all transform hover:scale-110 ${
-                isLoadingFavorite ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`flex-shrink-0 transition-all transform hover:scale-110 ${isLoadingFavorite ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               title={!session ? "Sign in to add to favorites" : isFavorited ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart
-                className={`w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ${
-                  session && isFavorited
-                    ? 'text-[#FF6B6B] fill-[#FF6B6B] animate-pulse'
-                    : 'text-gray-400 hover:text-[#FF6B6B]'
-                }`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 ${session && isFavorited
+                  ? 'text-[#FF6B6B] fill-[#FF6B6B] animate-pulse'
+                  : 'text-gray-400 hover:text-[#FF6B6B]'
+                  }`}
               />
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
-          {/* Video Player */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden border-4 border-[#FFD166]">
+          {/* Video Player - smaller */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden border-4 border-[#FFD166] lg:sticky lg:top-24">
               <div className="relative aspect-video bg-black">
                 <YouTube
                   videoId={video.youtubeId}
@@ -227,15 +254,26 @@ export default function VideoPlayer({ video }: { video: Video }) {
             </div>
           </div>
 
-          {/* Lyrics Panel */}
-          <div className="lg:col-span-2">
+          {/* Lyrics Panel - larger */}
+          <div className="lg:col-span-3">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 lg:sticky lg:top-24 max-h-[500px] lg:max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col border-4 border-[#FFA07A]">
               <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-[#FF6B6B]" style={{ fontFamily: 'cursive' }}>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-[#FF6B6B] to-[#FFA07A] rounded-full flex items-center justify-center">
                   <Music className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                Lyrics
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD166]" />
+                <div className="flex items-center gap-2">
+                  Lyrics
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD166]" />
+                </div>
+                {/* Auto Scroll Toggle Button */}
+                {video.lyrics.length > 0 && !autoScroll && (
+                  <button
+                    onClick={() => setAutoScroll(true)}
+                    className="text-xs px-3 py-1 bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white rounded-full font-bold hover:shadow-lg transition-all"
+                  >
+                    ▶ Auto Scroll
+                  </button>
+                )}
               </h2>
 
               {video.lyrics.length === 0 ? (
@@ -255,29 +293,29 @@ export default function VideoPlayer({ video }: { video: Video }) {
               ) : (
                 <div
                   ref={lyricsContainerRef}
-                  className="flex-1 overflow-y-auto space-y-2 sm:space-y-3 pr-1 sm:pr-2"
+                  onScroll={handleLyricsScroll}
+                  className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 px-3 py-3"
                 >
                   {video.lyrics.map((lyric, index) => {
                     const isActive = currentLyricIndex === index;
                     const isPast = currentTime > lyric.endTime;
-                    const isFuture = currentTime < lyric.startTime;
 
-                    // Color themes for different states
+                    // Colorful theme from old design
                     let borderColor = 'border-[#95E1D3]';
                     let bgColor = 'bg-white';
                     let textColor = 'text-gray-900';
-                    let subTextColor = 'text-gray-600';
-                    
+                    let chordColor = 'text-[#4ECDC4]';
+
                     if (isActive) {
                       borderColor = 'border-[#FF6B6B]';
                       bgColor = 'bg-gradient-to-br from-[#FF6B6B]/10 to-[#FFA07A]/10';
                       textColor = 'text-[#FF6B6B]';
-                      subTextColor = 'text-[#FFA07A]';
+                      chordColor = 'text-[#FFD166]';
                     } else if (isPast) {
                       borderColor = 'border-[#4ECDC4]/30';
                       bgColor = 'bg-[#4ECDC4]/5';
                       textColor = 'text-gray-500';
-                      subTextColor = 'text-gray-400';
+                      chordColor = 'text-gray-400';
                     }
 
                     return (
@@ -285,74 +323,47 @@ export default function VideoPlayer({ video }: { video: Video }) {
                         key={lyric.id}
                         id={`lyric-${index}`}
                         onClick={() => seekToLyric(lyric.startTime)}
-                        className={`p-3 sm:p-4 rounded-lg sm:rounded-xl cursor-pointer transition-all duration-300 border-2 sm:border-[3px] ${borderColor} ${bgColor} hover:shadow-lg ${
-                          isActive ? 'shadow-xl scale-105 ring-2 sm:ring-4 ring-[#FF6B6B]/20' : ''
-                        }`}
+                        className={`p-3 sm:p-4 rounded-xl cursor-pointer transition-all duration-300 border-2 sm:border-[3px] ${borderColor} ${bgColor} hover:shadow-lg ${isActive ? 'shadow-xl scale-[1.03] ring-2 sm:ring-4 ring-[#FF6B6B]/20' : ''
+                          }`}
                       >
-                        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                          <span className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-[#4ECDC4] to-[#95E1D3] text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
-                            {Math.floor(lyric.startTime / 60)}:{(lyric.startTime % 60).toFixed(0).padStart(2, '0')}
-                          </span>
-                          {isActive && (
-                            <div className="flex gap-0.5 sm:gap-1">
-                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#FF6B6B] rounded-full animate-pulse-delay-1"></div>
-                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#FFD166] rounded-full animate-pulse-delay-2"></div>
-                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#4ECDC4] rounded-full animate-pulse-delay-3"></div>
-                            </div>
-                          )}
-                        </div>
-                        {/* Chords display */}
+                        {/* Chords - clean display above lyrics */}
                         {lyric.chords && (
-                          <div className="mb-2">
-                            <p className={`font-mono font-bold ${isActive ? 'text-sm sm:text-base' : 'text-xs sm:text-sm'} ${
-                              isActive ? 'text-[#FFD166]' : 'text-[#4ECDC4]'
-                            }`}>
-                              {lyric.chords}
-                            </p>
-                          </div>
+                          <p className={`font-mono font-bold text-sm sm:text-base mb-1 ${chordColor}`}>
+                            {lyric.chords}
+                          </p>
                         )}
-                        {lyric.words && lyric.words.length > 0 ? (
-                          <p
-                            className={`thai-text mb-1.5 sm:mb-2 font-bold ${
-                              isActive ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
-                            } ${textColor} flex flex-wrap gap-0.5 sm:gap-1`}
-                            style={isActive ? { fontFamily: 'cursive' } : {}}
-                          >
-                            {lyric.words.map((word) => {
-                              const wordEndTime = word.startTime + word.duration;
-                              const isWordActive = currentTime >= word.startTime && currentTime <= wordEndTime;
 
-                              return (
-                                <span
-                                  key={word.id}
-                                  className={`inline-block transition-all duration-100 ${
-                                    isWordActive ? 'animate-bounce-word text-[#FF6B6B] scale-125 font-extrabold' : ''
-                                  }`}
-                                  style={{
-                                    animation: isWordActive ? 'bounceWord 0.3s ease-in-out' : 'none'
-                                  }}
-                                >
-                                  {word.text}
-                                </span>
-                              );
-                            })}
-                          </p>
-                        ) : (
-                          <p
-                            className={`thai-text mb-1.5 sm:mb-2 font-bold ${
-                              isActive ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
-                            } ${textColor}`}
-                            style={isActive ? { fontFamily: 'cursive' } : {}}
-                          >
-                            {lyric.thaiText}
-                          </p>
-                        )}
+                        {/* Lyrics text - clean and readable */}
+                        <p className={`text-base sm:text-lg font-medium leading-relaxed ${textColor}`}>
+                          {lyric.thaiText}
+                        </p>
+
+                        {/* Translation */}
                         {lyric.translation && (
-                          <p
-                            className={`text-xs sm:text-sm font-semibold ${subTextColor}`}
-                          >
+                          <p className="text-gray-500 text-xs sm:text-sm mt-1 italic">
                             {lyric.translation}
                           </p>
+                        )}
+
+                        {/* Piano Notes - rendered as sheet music */}
+                        {lyric.pianoNotes && (
+                          <div className={`mt-1 ${isActive ? 'sheet-music-active' : 'opacity-50'}`}>
+                            <SheetMusic
+                              notation={lyric.pianoNotes}
+                              lineHeight={40}
+                              width={150}
+                            />
+                          </div>
+                        )}
+
+                        {/* Timestamp at bottom - only for active lyric */}
+                        {isActive && (
+                          <div className="flex items-center gap-1 mt-2">
+                            <div className="w-1.5 h-1.5 bg-[#FF6B6B] rounded-full animate-pulse"></div>
+                            <span className="text-[10px] text-gray-400">
+                              {Math.floor(lyric.startTime / 60)}:{(lyric.startTime % 60).toFixed(0).padStart(2, '0')}
+                            </span>
+                          </div>
                         )}
                       </div>
                     );

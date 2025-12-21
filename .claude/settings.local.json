@@ -15,7 +15,8 @@
       "Bash(npm install:*)",
       "Bash(where:*)",
       "Bash(where.exe:*)",
-      "Bash(node test-download-fixed.mjs:*)"
+      "Bash(node test-download-fixed.mjs:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  getAdminByEmail,
+  getUserByEmail,
+  getFavorite
+} from "@/lib/firestore";
 
 export async function GET(request: Request) {
   try {
@@ -22,42 +26,24 @@ export async function GET(request: Request) {
 
     if (isAdmin) {
       // Admin user
-      const admin = await prisma.admin.findUnique({
-        where: { email: session.user.email }
-      });
+      const admin = await getAdminByEmail(session.user.email);
 
       if (!admin) {
         return NextResponse.json({ isFavorited: false });
       }
 
       // Check if favorited
-      favorite = await prisma.favorite.findUnique({
-        where: {
-          adminId_videoId: {
-            adminId: admin.id,
-            videoId: videoId
-          }
-        }
-      });
+      favorite = await getFavorite(null, admin.id, videoId);
     } else {
       // Normal user
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email }
-      });
+      const user = await getUserByEmail(session.user.email);
 
       if (!user) {
         return NextResponse.json({ isFavorited: false });
       }
 
       // Check if favorited
-      favorite = await prisma.favorite.findUnique({
-        where: {
-          userId_videoId: {
-            userId: user.id,
-            videoId: videoId
-          }
-        }
-      });
+      favorite = await getFavorite(user.id, null, videoId);
     }
 
     return NextResponse.json({ isFavorited: !!favorite });

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getVideoById, getLyricsByVideoId } from "@/lib/firestore";
 import VideoEditor from "@/components/admin/VideoEditor";
 
 export default async function EditVideoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,20 +18,19 @@ export default async function EditVideoPage({ params }: { params: Promise<{ id: 
   }
 
   const resolvedParams = await params;
-  const video = await prisma.video.findUnique({
-    where: { id: resolvedParams.id },
-    include: {
-      lyrics: {
-        orderBy: {
-          startTime: 'asc'
-        }
-      }
-    }
-  });
+  const video = await getVideoById(resolvedParams.id);
 
   if (!video) {
     redirect("/admin");
   }
 
-  return <VideoEditor video={video} />;
+  // Get lyrics for the video
+  const lyrics = await getLyricsByVideoId(resolvedParams.id);
+
+  const videoWithLyrics = {
+    ...video,
+    lyrics
+  };
+
+  return <VideoEditor video={videoWithLyrics} />;
 }

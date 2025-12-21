@@ -1,30 +1,26 @@
-import { prisma } from "@/lib/prisma";
+import { getVideoByYoutubeId, getLyricsByVideoId } from "@/lib/firestore";
 import { redirect } from "next/navigation";
 import VideoPlayer from "@/components/lyrics/VideoPlayer";
 
 export default async function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const video = await prisma.video.findUnique({
-    where: { youtubeId: resolvedParams.id },
-    include: {
-      lyrics: {
-        orderBy: {
-          startTime: 'asc'
-        },
-        include: {
-          words: {
-            orderBy: {
-              order: 'asc'
-            }
-          }
-        }
-      }
-    }
-  });
+  const video = await getVideoByYoutubeId(resolvedParams.id);
 
   if (!video) {
     redirect("/");
   }
 
-  return <VideoPlayer video={video} />;
+  // Get lyrics for the video
+  const lyrics = await getLyricsByVideoId(video.id);
+
+  // Format the video data to match expected structure
+  const videoWithLyrics = {
+    ...video,
+    lyrics: lyrics.map(lyric => ({
+      ...lyric,
+      words: [] // Words would need a separate fetch if needed
+    }))
+  };
+
+  return <VideoPlayer video={videoWithLyrics} />;
 }

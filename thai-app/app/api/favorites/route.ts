@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  getAdminByEmail,
+  getUserByEmail,
+  getFavorite,
+  getFavoritesByAdmin,
+  getFavoritesByUser,
+  createFavorite,
+  deleteFavorite,
+  getVideoById
+} from "@/lib/firestore";
+import { firestore, COLLECTIONS } from "@/lib/firebase";
 
 export async function POST(request: Request) {
   try {
@@ -23,9 +33,7 @@ export async function POST(request: Request) {
 
     if (isAdmin) {
       // Admin user
-      const admin = await prisma.admin.findUnique({
-        where: { email: session.user.email }
-      });
+      const admin = await getAdminByEmail(session.user.email);
 
       if (!admin) {
         return NextResponse.json({ error: "Admin not found" }, { status: 404 });
@@ -34,19 +42,10 @@ export async function POST(request: Request) {
       accountId = admin.id;
 
       // Check if already favorited
-      existing = await prisma.favorite.findUnique({
-        where: {
-          adminId_videoId: {
-            adminId: admin.id,
-            videoId: videoId
-          }
-        }
-      });
+      existing = await getFavorite(null, admin.id, videoId);
     } else {
       // Normal user
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email }
-      });
+      const user = await getUserByEmail(session.user.email);
 
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -55,14 +54,7 @@ export async function POST(request: Request) {
       accountId = user.id;
 
       // Check if already favorited
-      existing = await prisma.favorite.findUnique({
-        where: {
-          userId_videoId: {
-            userId: user.id,
-            videoId: videoId
-          }
-        }
-      });
+      existing = await getFavorite(user.id, null, videoId);
     }
 
     if (existing) {
@@ -70,14 +62,12 @@ export async function POST(request: Request) {
     }
 
     // Create favorite
-    const favorite = await prisma.favorite.create({
-      data: isAdmin ? {
-        adminId: accountId,
-        videoId: videoId
-      } : {
-        userId: accountId,
-        videoId: videoId
-      }
+    const favorite = await createFavorite(isAdmin ? {
+      adminId: accountId,
+      videoId: videoId
+    } : {
+      userId: accountId,
+      videoId: videoId
     });
 
     return NextResponse.json({ success: true, favorite });
@@ -105,38 +95,30 @@ export async function DELETE(request: Request) {
 
     if (isAdmin) {
       // Admin user
-      const admin = await prisma.admin.findUnique({
-        where: { email: session.user.email }
-      });
+      const admin = await getAdminByEmail(session.user.email);
 
       if (!admin) {
         return NextResponse.json({ error: "Admin not found" }, { status: 404 });
       }
 
-      // Delete favorite
-      await prisma.favorite.deleteMany({
-        where: {
-          adminId: admin.id,
-          videoId: videoId
-        }
-      });
+      // Find and delete favorite
+      const favorite = await getFavorite(null, admin.id, videoId);
+      if (favorite) {
+        await deleteFavorite(favorite.id);
+      }
     } else {
       // Normal user
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email }
-      });
+      const user = await getUserByEmail(session.user.email);
 
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      // Delete favorite
-      await prisma.favorite.deleteMany({
-        where: {
-          userId: user.id,
-          videoId: videoId
-        }
-      });
+      // Find and delete favorite
+      const favorite = await getFavorite(user.id, null, videoId);
+      if (favorite) {
+        await deleteFavorite(favorite.id);
+      }
     }
 
     return NextResponse.json({ success: true });
@@ -154,65 +136,51 @@ export async function GET(request: Request) {
     }
 
     const isAdmin = session.user.isAdmin;
-    let favorites;
+    let favoritesWithVideos: any[] = [];
 
     if (isAdmin) {
       // Admin user
-      const admin = await prisma.admin.findUnique({
-        where: { email: session.user.email },
-        include: {
-          favorites: {
-            include: {
-              video: {
-                include: {
-                  lyrics: {
-                    take: 1
-                  }
-                }
-              }
-            },
-            orderBy: {
-              createdAt: 'desc'
-            }
-          }
-        }
-      });
+      const admin = await getAdminByEmail(session.user.email);
 
       if (!admin) {
         return NextResponse.json({ error: "Admin not found" }, { status: 404 });
       }
 
-      favorites = admin.favorites;
+      const favorites = await getFavoritesByAdmin(admin.id);
+
+      // Fetch videos for each favorite
+      for (const fav of favorites) {
+        const video = await getVideoById(fav.videoId);
+        if (video) {
+          favoritesWithVideos.push({
+            ...fav,
+            video
+          });
+        }
+      }
     } else {
       // Normal user
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        include: {
-          favorites: {
-            include: {
-              video: {
-                include: {
-                  lyrics: {
-                    take: 1
-                  }
-                }
-              }
-            },
-            orderBy: {
-              createdAt: 'desc'
-            }
-          }
-        }
-      });
+      const user = await getUserByEmail(session.user.email);
 
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      favorites = user.favorites;
+      const favorites = await getFavoritesByUser(user.id);
+
+      // Fetch videos for each favorite
+      for (const fav of favorites) {
+        const video = await getVideoById(fav.videoId);
+        if (video) {
+          favoritesWithVideos.push({
+            ...fav,
+            video
+          });
+        }
+      }
     }
 
-    return NextResponse.json({ favorites });
+    return NextResponse.json({ favorites: favoritesWithVideos });
   } catch (error) {
     console.error('Error fetching favorites:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

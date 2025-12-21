@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getVideos } from "@/lib/firestore";
 import Link from "next/link";
 import Image from "next/image";
 import { Music, Heart } from "lucide-react";
@@ -6,15 +6,10 @@ import Header from "@/components/Header";
 import ExpandableDescription from "@/components/ExpandableDescription";
 
 export default async function Home() {
-  const videos = await prisma.video.findMany({
-    orderBy: {
-      publishedAt: 'desc'
-    },
-    include: {
-      lyrics: {
-        take: 1
-      }
-    }
+  const videos = await getVideos({
+    orderBy: 'publishedAt',
+    orderDirection: 'desc',
+    includeLyrics: true
   });
 
   return (
@@ -87,14 +82,14 @@ export default async function Home() {
               const rotation = rotations[index % rotations.length];
               const colors = [
                 'border-[#FF6B6B]',
-                'border-[#4ECDC4]', 
+                'border-[#4ECDC4]',
                 'border-[#FFD166]',
                 'border-[#FFA07A]',
                 'border-[#95E1D3]',
                 'border-[#FFBE76]'
               ];
               const borderColor = colors[index % colors.length];
-              
+
               // Sticker colors matching lanterns
               const stickerColors = [
                 'from-[#FF6B6B] to-[#FFA07A]',
@@ -105,7 +100,7 @@ export default async function Home() {
                 'from-[#FFBE76] to-[#FFD166]'
               ];
               const stickerColor = stickerColors[index % stickerColors.length];
-              
+
               return (
                 <Link
                   key={video.id}
@@ -135,7 +130,7 @@ export default async function Home() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Polaroid caption area */}
                   <div className="bg-white pt-2 pb-3 sm:pb-4 px-2">
                     <h3 className="font-bold text-lg sm:text-xl text-gray-800 mb-2 line-clamp-2 text-center leading-tight" style={{ fontFamily: 'cursive' }}>
@@ -150,7 +145,7 @@ export default async function Home() {
                       />
                     )}
 
-                    {video.lyrics.length > 0 && (
+                    {video.lyrics && video.lyrics.length > 0 && (
                       <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm bg-gradient-to-r from-[#FF6B6B] to-[#FFA07A] py-1.5 sm:py-2 px-3 sm:px-4 rounded-full shadow-md font-semibold">
                         <Music className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>Lyrics Available!</span>

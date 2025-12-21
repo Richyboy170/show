@@ -1,9 +1,18 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 import { isAdminEmail } from "./admin-utils";
+import {
+  getAdminByEmail,
+  createAdmin,
+  updateAdmin,
+  getUserByEmail,
+  createUser,
+  updateUser,
+  Admin,
+  User,
+} from "./firestore";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -43,19 +52,15 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Find or create admin user
-        let admin = await prisma.admin.findUnique({
-          where: { email: credentials.email }
-        });
+        let admin = await getAdminByEmail(credentials.email);
 
         if (!admin) {
           // Create admin if doesn't exist
           const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD!, 10);
-          admin = await prisma.admin.create({
-            data: {
-              email: credentials.email,
-              password: hashedPassword,
-              name: "Admin"
-            }
+          admin = await createAdmin({
+            email: credentials.email,
+            password: hashedPassword,
+            name: "Admin"
           });
         }
 
@@ -86,32 +91,25 @@ export const authOptions: NextAuthOptions = {
           // Check if this email is in the admin list (from .env)
           if (isAdminEmail(user.email)) {
             // Admin login
-            let admin = await prisma.admin.findUnique({
-              where: { email: user.email }
-            });
+            let admin = await getAdminByEmail(user.email);
 
             if (!admin) {
               // Create admin with Google OAuth
               const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD!, 10);
-              admin = await prisma.admin.create({
-                data: {
-                  email: user.email,
-                  name: user.name || "Admin",
-                  googleId: account.providerAccountId,
-                  password: hashedPassword,
-                  image: user.image
-                }
+              admin = await createAdmin({
+                email: user.email,
+                name: user.name || "Admin",
+                googleId: account.providerAccountId,
+                password: hashedPassword,
+                image: user.image
               });
               console.log("Created new admin via Google OAuth:", admin.email);
             } else {
               // Update existing admin with latest Google info
-              await prisma.admin.update({
-                where: { id: admin.id },
-                data: {
-                  googleId: account.providerAccountId,
-                  image: user.image,
-                  name: user.name || admin.name
-                }
+              await updateAdmin(admin.id, {
+                googleId: account.providerAccountId,
+                image: user.image,
+                name: user.name || admin.name
               });
               console.log("Updated existing admin:", admin.email);
             }
@@ -120,30 +118,23 @@ export const authOptions: NextAuthOptions = {
             user.id = admin.id;
           } else {
             // Regular user login
-            let regularUser = await prisma.user.findUnique({
-              where: { email: user.email }
-            });
+            let regularUser = await getUserByEmail(user.email);
 
             if (!regularUser) {
               // Create regular user
-              regularUser = await prisma.user.create({
-                data: {
-                  email: user.email,
-                  name: user.name || "User",
-                  googleId: account.providerAccountId,
-                  image: user.image
-                }
+              regularUser = await createUser({
+                email: user.email,
+                name: user.name || "User",
+                googleId: account.providerAccountId,
+                image: user.image
               });
               console.log("Created new user via Google OAuth:", regularUser.email);
             } else {
               // Update existing user with latest Google info
-              await prisma.user.update({
-                where: { id: regularUser.id },
-                data: {
-                  googleId: account.providerAccountId,
-                  image: user.image,
-                  name: user.name || regularUser.name
-                }
+              await updateUser(regularUser.id, {
+                googleId: account.providerAccountId,
+                image: user.image,
+                name: user.name || regularUser.name
               });
               console.log("Updated existing user:", regularUser.email);
             }
@@ -203,9 +194,7 @@ export const authOptions: NextAuthOptions = {
         // Refresh user data from database and check admin status
         if (isAdminEmail(token.email)) {
           // Admin user
-          const admin = await prisma.admin.findUnique({
-            where: { email: token.email as string }
-          });
+          const admin = await getAdminByEmail(token.email as string);
           if (admin) {
             token.name = admin.name || "";
             token.picture = admin.image || null;
@@ -213,9 +202,7 @@ export const authOptions: NextAuthOptions = {
           }
         } else {
           // Regular user
-          const regularUser = await prisma.user.findUnique({
-            where: { email: token.email as string }
-          });
+          const regularUser = await getUserByEmail(token.email as string);
           if (regularUser) {
             token.name = regularUser.name || "";
             token.picture = regularUser.image || null;

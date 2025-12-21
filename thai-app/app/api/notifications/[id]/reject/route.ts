@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { updateNotification } from "@/lib/firestore";
 
 export async function POST(
   request: Request,
@@ -20,12 +20,9 @@ export async function POST(
 
     const resolvedParams = await params;
     // Mark notification as rejected and read
-    await prisma.notification.update({
-      where: { id: resolvedParams.id },
-      data: {
-        isApproved: false,
-        isRead: true
-      }
+    await updateNotification(resolvedParams.id, {
+      isApproved: false,
+      isRead: true
     });
 
     return NextResponse.json({ success: true });

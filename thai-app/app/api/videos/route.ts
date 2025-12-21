@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  getVideos,
+  getVideoByYoutubeId,
+  createVideo,
+  getAdminByEmail,
+  getLyricsByVideoId
+} from "@/lib/firestore";
 import { extractVideoId, fetchVideoDetails, parseDuration } from "@/lib/youtube";
 
 export async function POST(request: Request) {
@@ -40,9 +46,7 @@ export async function POST(request: Request) {
     }
 
     // Check if video already exists
-    const existingVideo = await prisma.video.findUnique({
-      where: { youtubeId: videoId }
-    });
+    const existingVideo = await getVideoByYoutubeId(videoId);
 
     if (existingVideo) {
       console.warn('[VIDEO API] Video already exists:', videoId);
@@ -76,29 +80,25 @@ export async function POST(request: Request) {
     });
 
     // Get current admin's ID to track who added the video
-    const currentAdmin = await prisma.admin.findUnique({
-      where: { email: session.user.email! }
-    });
+    const currentAdmin = await getAdminByEmail(session.user.email!);
 
     // Create video in database (shared among all admins)
-    const video = await prisma.video.create({
-      data: {
-        youtubeId: videoId,
-        title: videoDetails.title,
-        description: videoDetails.description,
-        thumbnailUrl: videoDetails.thumbnailUrl,
-        publishedAt: new Date(videoDetails.publishedAt),
-        duration: parseDuration(videoDetails.duration),
-        channelTitle: videoDetails.channelTitle,
-        adminId: currentAdmin?.id // Optional: track who added it
-      },
-      include: {
-        lyrics: true
-      }
+    const video = await createVideo({
+      youtubeId: videoId,
+      title: videoDetails.title,
+      description: videoDetails.description,
+      thumbnailUrl: videoDetails.thumbnailUrl,
+      publishedAt: new Date(videoDetails.publishedAt),
+      duration: parseDuration(videoDetails.duration),
+      channelTitle: videoDetails.channelTitle,
+      adminId: currentAdmin?.id // Optional: track who added it
     });
 
+    // Get lyrics for the response (will be empty for new video)
+    const lyrics = await getLyricsByVideoId(video.id);
+
     console.log('[VIDEO API] Video created successfully:', video.id);
-    return NextResponse.json(video);
+    return NextResponse.json({ ...video, lyrics });
   } catch (error) {
     console.error('[VIDEO API] Unexpected error:', error);
     return NextResponse.json({
@@ -109,17 +109,10 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const videos = await prisma.video.findMany({
-      include: {
-        lyrics: {
-          orderBy: {
-            startTime: 'asc'
-          }
-        }
-      },
-      orderBy: {
-        publishedAt: 'desc'
-      }
+    const videos = await getVideos({
+      orderBy: 'publishedAt',
+      orderDirection: 'desc',
+      includeLyrics: true
     });
 
     return NextResponse.json(videos);

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  getVideoById,
+  deleteVideo,
+  updateVideo,
+  getLyricsByVideoId
+} from "@/lib/firestore";
 
 export async function DELETE(
   request: Request,
@@ -19,9 +24,7 @@ export async function DELETE(
     }
 
     const resolvedParams = await params;
-    await prisma.video.delete({
-      where: { id: resolvedParams.id }
-    });
+    await deleteVideo(resolvedParams.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -36,22 +39,16 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const video = await prisma.video.findUnique({
-      where: { id: resolvedParams.id },
-      include: {
-        lyrics: {
-          orderBy: {
-            startTime: 'asc'
-          }
-        }
-      }
-    });
+    const video = await getVideoById(resolvedParams.id);
 
     if (!video) {
       return NextResponse.json({ error: "Video not found" }, { status: 404 });
     }
 
-    return NextResponse.json(video);
+    // Get lyrics for the video
+    const lyrics = await getLyricsByVideoId(resolvedParams.id);
+
+    return NextResponse.json({ ...video, lyrics });
   } catch (error) {
     console.error('Error fetching video:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -77,18 +74,19 @@ export async function PUT(
     const body = await request.json();
     const { title, description } = body;
 
-    const video = await prisma.video.update({
-      where: { id: resolvedParams.id },
-      data: {
-        title,
-        description
-      },
-      include: {
-        lyrics: true
-      }
+    const video = await updateVideo(resolvedParams.id, {
+      title,
+      description
     });
 
-    return NextResponse.json(video);
+    if (!video) {
+      return NextResponse.json({ error: "Video not found" }, { status: 404 });
+    }
+
+    // Get lyrics for the response
+    const lyrics = await getLyricsByVideoId(resolvedParams.id);
+
+    return NextResponse.json({ ...video, lyrics });
   } catch (error) {
     console.error('Error updating video:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
