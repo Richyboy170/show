@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(rm:*)",
+      "Bash(npm run build:*)",
+      "Bash(find app/api/lyrics -name \"route.ts\" -type f -exec sh -c 'wc -l \"\"$1\"\" | awk \"\"{if \\(\\\\$1 == 0 || \\\\$1 == 1\\) print \\\\$2}\"\"' _ {} ;)",
+      "Bash(npm update:*)",
+      "Bash(npx next build)",
+      "Bash(npm audit:*)",
+      "Bash(npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

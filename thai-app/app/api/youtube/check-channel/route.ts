@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     }
 
     // Check for new videos
-    const newVideos = await checkForNewVideos(channelId, channelMonitor.lastVideoId);
+    const newVideos = await checkForNewVideos(channelId, channelMonitor.lastVideoId ?? null);
 
     // Get admin
     const admin = await getAdminByEmail(session.user?.email!);

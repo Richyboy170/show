@@ -36,53 +36,63 @@ export async function generateChordsForLyrics(
 
     const openai = new OpenAI({ apiKey });
 
-    // Prepare lyrics text for analysis
-    const lyricsText = lyrics
+
+
+    progressCallback?.(30, 'Analyzing song structure...');
+
+    const systemPrompt = `You are an expert music transcriber who specializes in transcribing chords for Thai songs.
+
+YOUR TASK: Transcribe the ACTUAL chords being played in the song during each lyric line.
+
+CRITICAL INSTRUCTIONS:
+1. Use the song title to identify the song and recall/infer its chord progression
+2. For each lyric line, list ALL the chord changes that occur during that line
+3. If a line has 4 chord changes (e.g., the music goes C → G → Am → F), write "C G Am F"
+4. If a line only has 1 chord being held throughout, write just that chord
+5. The number of chords should match what is ACTUALLY PLAYED in the music, not based on line duration
+
+IMPORTANT:
+- Many Thai pop songs use 4-chord progressions per phrase (e.g., "C G Am F" or "G D Em C")
+- Verse and chorus often have the same progression repeated
+- Bridge sections may have different chords
+- Listen mentally to how the song flows - each lyric phrase usually covers a full chord progression
+- If unsure about the exact song, use common Thai pop progressions that fit the emotional tone
+
+Use standard chord notation: C, G, Am, F, Dm, Em, Bm, D, A, E, plus 7th chords like Am7, Cmaj7, G7.
+
+Return ONLY valid JSON array, no markdown formatting.`;
+
+    // Prepare lyrics with timestamps
+    const lyricsFormatted = lyrics
         .sort((a, b) => a.order - b.order)
         .map((l, i) => `${i + 1}. [${l.startTime.toFixed(1)}s-${l.endTime.toFixed(1)}s] ${l.thaiText}`)
         .join('\n');
 
-    progressCallback?.(30, 'Analyzing song structure...');
-
-    const systemPrompt = `You are an expert music transcriber specializing in Thai pop, rock, and ballad songs. 
-Your task is to suggest chord progressions for Thai song lyrics.
-
-Guidelines:
-- Analyze the lyrics and suggest appropriate chords based on:
-  1. Common Thai pop chord progressions (C-G-Am-F, G-D-Em-C, etc.)
-  2. The emotional content of the lyrics
-  3. Typical verse/chorus patterns
-- Use standard chord notation (C, G, Am, F, Dm, Em, etc.)
-- Include 7th chords (Cmaj7, Am7) for ballads
-- Use 1-3 chords per lyric line
-- Consider key changes between verse and chorus
-- For Thai songs, common keys are C, G, D, A major and Am, Em minor
-
-Return ONLY valid JSON array, no markdown formatting.`;
-
     const userPrompt = `Song Title: "${songTitle}"
 YouTube ID: ${youtubeId}
 
-Lyrics (with timestamps):
-${lyricsText}
+Please transcribe the chords for this Thai song. For each lyric line, provide ALL the chords that are played during that line.
 
-Generate appropriate chords for each lyric line. Consider this is likely a Thai pop/rock/ballad song.
+Lyrics (with timestamps):
+${lyricsFormatted}
+
+For each line, transcribe the chord progression that plays during those lyrics. If the song uses "C G Am F" progression and line 1 covers the full progression, write "C G Am F". If line 2 only covers "C G", write "C G".
 
 Return as JSON array:
 [
   {
     "order": 1,
-    "chords": "C G",
+    "chords": "C G Am F",
     "confidence": "high"
   },
   {
     "order": 2, 
-    "chords": "Am F",
+    "chords": "C G Am F",
     "confidence": "medium"
   }
 ]
 
-Include all ${lyrics.length} lines. Use "high" confidence for likely chord progressions, "medium" for reasonable guesses, "low" for uncertain.`;
+Include all ${lyrics.length} lines. Use "high" if you recognize the song, "medium" for educated guesses, "low" for uncertain.`;
 
     progressCallback?.(50, 'Generating chord suggestions...');
 
@@ -94,7 +104,7 @@ Include all ${lyrics.length} lines. Use "high" confidence for likely chord progr
                 { role: 'user', content: userPrompt }
             ],
             temperature: 0.3, // Lower temperature for more consistent results
-            max_tokens: 2000
+            max_tokens: 4000 // Increased for longer chord progressions
         });
 
         const aiResponse = response.choices[0]?.message?.content || '';

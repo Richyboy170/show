@@ -73,8 +73,8 @@ export const authOptions: NextAuthOptions = {
         return {
           id: admin.id,
           email: admin.email,
-          name: admin.name,
-          image: admin.image
+          name: admin.name ?? null,
+          image: admin.image ?? null
         };
       }
     })
@@ -101,14 +101,14 @@ export const authOptions: NextAuthOptions = {
                 name: user.name || "Admin",
                 googleId: account.providerAccountId,
                 password: hashedPassword,
-                image: user.image
+                image: user.image ?? undefined
               });
               console.log("Created new admin via Google OAuth:", admin.email);
             } else {
               // Update existing admin with latest Google info
               await updateAdmin(admin.id, {
                 googleId: account.providerAccountId,
-                image: user.image,
+                image: user.image ?? undefined,
                 name: user.name || admin.name
               });
               console.log("Updated existing admin:", admin.email);
@@ -126,14 +126,14 @@ export const authOptions: NextAuthOptions = {
                 email: user.email,
                 name: user.name || "User",
                 googleId: account.providerAccountId,
-                image: user.image
+                image: user.image ?? undefined
               });
               console.log("Created new user via Google OAuth:", regularUser.email);
             } else {
               // Update existing user with latest Google info
               await updateUser(regularUser.id, {
                 googleId: account.providerAccountId,
-                image: user.image,
+                image: user.image ?? undefined,
                 name: user.name || regularUser.name
               });
               console.log("Updated existing user:", regularUser.email);

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import YouTube, { YouTubeProps } from "react-youtube";
-import { ArrowLeft, Music, Heart, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Music, Heart, Sparkles, X, Mic } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,9 @@ import dynamic from 'next/dynamic';
 
 // Dynamically import SheetMusic (client-only)
 const SheetMusic = dynamic(() => import('@/components/SheetMusic'), { ssr: false });
+
+// Import LyricsMode component
+import LyricsMode from './LyricsMode';
 
 interface LyricWord {
   id: string;
@@ -23,10 +26,10 @@ interface LyricWord {
 interface Lyric {
   id: string;
   thaiText: string;
-  translation: string | null;
-  chords?: string | null;
-  pianoNotes?: string | null;
-  section?: string | null;
+  translation?: string;
+  chords?: string;
+  pianoNotes?: string;
+  section?: string;
   startTime: number;
   endTime: number;
   order: number;
@@ -37,7 +40,7 @@ interface Video {
   id: string;
   youtubeId: string;
   title: string;
-  description: string | null;
+  description?: string;
   lyrics: Lyric[];
 }
 
@@ -51,6 +54,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [showLyricsMode, setShowLyricsMode] = useState(false);
   const playerRef = useRef<any>(null);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -234,6 +238,15 @@ export default function VideoPlayer({ video }: { video: Video }) {
                   }`}
               />
             </button>
+            {/* Lyrics Mode Button */}
+            <button
+              onClick={() => setShowLyricsMode(true)}
+              className="flex-shrink-0 bg-gradient-to-r from-[#9B59B6] to-[#8E44AD] text-white px-3 py-2 rounded-full text-sm font-bold hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-1.5"
+              title="Enter Lyrics Mode for focused singing"
+            >
+              <Mic className="w-4 h-4" />
+              <span className="hidden sm:inline">Lyrics Mode</span>
+            </button>
           </div>
         </div>
 
@@ -351,7 +364,6 @@ export default function VideoPlayer({ video }: { video: Video }) {
                             <SheetMusic
                               notation={lyric.pianoNotes}
                               lineHeight={40}
-                              width={150}
                             />
                           </div>
                         )}
@@ -455,6 +467,14 @@ export default function VideoPlayer({ video }: { video: Video }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Lyrics Mode Overlay */}
+      {showLyricsMode && (
+        <LyricsMode
+          video={video}
+          onExit={() => setShowLyricsMode(false)}
+        />
       )}
     </div>
   );
