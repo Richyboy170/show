@@ -12,7 +12,13 @@
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
       "Bash(ls:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(sqlite3:*)",
+      "Bash(npm run db:studio:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(npx prisma generate)",
+      "Bash(npx prisma:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

@@ -2,6 +2,10 @@ import { getVideoByYoutubeId, getLyricsByVideoId } from "@/lib/firestore";
 import { redirect } from "next/navigation";
 import VideoPlayer from "@/components/lyrics/VideoPlayer";
 
+// Disable caching to always show latest data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function WatchPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const video = await getVideoByYoutubeId(resolvedParams.id);

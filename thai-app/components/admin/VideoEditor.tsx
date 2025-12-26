@@ -384,16 +384,12 @@ export default function VideoEditor({ video }: { video: any }) {
   const saveLyrics = async () => {
     setSaving(true);
     try {
-      // Delete existing lyrics
-      for (const lyric of video.lyrics) {
-        await axios.delete(`/api/lyrics?id=${lyric.id}&videoId=${video.id}`);
-      }
+      console.log(`Saving ${lyrics.length} lyrics for video ${video.id}`);
 
-      // Create new lyrics
-      for (let i = 0; i < lyrics.length; i++) {
-        const lyric = lyrics[i];
-        await axios.post('/api/lyrics', {
-          videoId: video.id,
+      // Use batch update endpoint for efficiency
+      const response = await axios.post('/api/lyrics/batch-update', {
+        videoId: video.id,
+        lyrics: lyrics.map((lyric, i) => ({
           thaiText: lyric.thaiText,
           translation: lyric.translation,
           chords: lyric.chords,
@@ -401,14 +397,24 @@ export default function VideoEditor({ video }: { video: any }) {
           startTime: lyric.startTime,
           endTime: lyric.endTime,
           order: i
-        });
-      }
+        }))
+      });
 
+      console.log('Batch update response:', response.data);
       alert('Lyrics saved successfully!');
       router.push('/admin');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving lyrics:', error);
-      alert('Failed to save lyrics');
+
+      // Provide more detailed error message
+      let errorMessage = 'Failed to save lyrics';
+      if (error.response?.data?.details) {
+        errorMessage += `: ${error.response.data.details}`;
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+
+      alert(errorMessage);
     } finally {
       setSaving(false);
     }

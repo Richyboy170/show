@@ -176,6 +176,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
     width: '100%',
     playerVars: {
       autoplay: 0,
+      origin: typeof window !== 'undefined' ? window.location.origin : undefined,
     },
   };
 
@@ -364,6 +365,9 @@ export default function VideoPlayer({ video }: { video: Video }) {
                             <SheetMusic
                               notation={lyric.pianoNotes}
                               lineHeight={40}
+                              currentTime={currentTime}
+                              startTime={lyric.startTime}
+                              endTime={lyric.endTime}
                             />
                           </div>
                         )}

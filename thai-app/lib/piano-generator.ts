@@ -18,7 +18,8 @@ export interface LyricForPianoGeneration {
 
 /**
  * Generate piano notes (ABC notation) for lyrics using AI
- * Uses GPT-4 to analyze the song and generate simple piano melodies
+ * Focuses on transcribing the VOCAL MELODY first, with chords used for harmonic context
+ * Uses GPT-4 to analyze the song and generate singable melody lines
  */
 export async function generatePianoNotesForLyrics(
     youtubeId: string,
@@ -33,7 +34,7 @@ export async function generatePianoNotesForLyrics(
     }
 
     progressCallback?.(10, 'Connecting to AI...');
-    console.log('[PIANO-GENERATOR] Starting piano note generation for:', songTitle);
+    console.log('[PIANO-GENERATOR] Starting vocal melody generation for:', songTitle);
 
     const openai = new OpenAI({ apiKey });
 
@@ -48,8 +49,14 @@ export async function generatePianoNotesForLyrics(
 
     progressCallback?.(30, 'Analyzing song melody...');
 
-    const systemPrompt = `You are an expert music composer specializing in creating simple piano melodies for Thai pop songs.
-Your task is to generate ABC music notation for each lyric line that represents a singable melody.
+    const systemPrompt = `You are an expert music transcriber specializing in Thai pop song melodies.
+Your PRIMARY task is to generate ABC music notation that captures the VOCAL MELODY - what the singer is actually singing.
+
+MELODY FOCUS (Most Important):
+- Focus on transcribing the vocal melody line, not chord accompaniment
+- The melody should match what the singer sings, syllable by syllable
+- Prioritize melodic contour and singability over chord-fitting
+- Think of this as sheet music for the vocalist, not the pianist
 
 ABC Notation Guidelines:
 - Use standard ABC notation format
@@ -58,22 +65,29 @@ ABC Notation Guidelines:
 - Use durations: 2 (half), 4 (whole), /2 (eighth)
 - Keep melodies simple and singable (4-12 notes per line)
 - Match the melody rhythm to the lyric syllables
-- Use the chord context to inform note choices (notes from chord tones)
 
 Common Thai Pop Melody Patterns:
 - Verse melodies often move stepwise (C D E F or E D C B)
 - Chorus melodies have more leaps and higher notes
-- End phrases on chord tones (root, third, fifth)
+- Melodies often emphasize the 1st, 3rd, or 5th scale degree
+
+CHORD CONTEXT (Secondary):
+- Chords are provided for harmonic reference only
+- Use them to determine the key and scale context
+- Don't force melody notes to be chord tones - the melody should sound natural first
 
 Return ONLY valid JSON array, no markdown formatting.`;
 
     const userPrompt = `Song Title: "${songTitle}"
 YouTube ID: ${youtubeId}
 
-Lyrics (with timestamps and chords):
+Lyrics (with timestamps and chords for reference):
 ${lyricsText}
 
-Generate ABC notation piano melodies for each lyric line. The melodies should be simple, singable, and match typical Thai pop song patterns.
+Your task: Generate ABC notation for the VOCAL MELODY of each lyric line.
+- Focus on what the singer is singing, not chord accompaniment
+- The melodies should be simple, singable, and match typical Thai pop song patterns
+- Chords are provided for key/scale context only - don't let them override natural melody
 
 Return as JSON array:
 [
@@ -92,7 +106,7 @@ Return as JSON array:
 Include all ${lyrics.length} lines. Use "high" confidence for strong melodic matches, "medium" for reasonable guesses, "low" for uncertain.
 IMPORTANT: Use \\n for newlines in the ABC notation strings (JSON escaped).`;
 
-    progressCallback?.(50, 'Generating piano melodies...');
+    progressCallback?.(50, 'Generating vocal melodies...');
 
     try {
         const response = await openai.chat.completions.create({
@@ -147,9 +161,9 @@ IMPORTANT: Use \\n for newlines in the ABC notation strings (JSON escaped).`;
         });
 
         const validSuggestions = suggestions.filter(s => s.pianoNotes);
-        console.log(`[PIANO-GENERATOR] Generated ${validSuggestions.length} piano melodies`);
+        console.log(`[PIANO-GENERATOR] Generated ${validSuggestions.length} vocal melodies`);
 
-        progressCallback?.(100, 'Piano note generation complete!');
+        progressCallback?.(100, 'Vocal melody generation complete!');
 
         return suggestions;
     } catch (error: any) {
