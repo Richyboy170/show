@@ -8,14 +8,15 @@ import Link from "next/link";
 import axios from "axios";
 import ExpandableDescription from "@/components/ExpandableDescription";
 
-id ?: string;
-thaiText: string;
-translation: string;
-chords ?: string;
-pianoNotes ?: string;
-startTime: number;
-endTime: number;
-order: number;
+interface Lyric {
+  id?: string;
+  thaiText: string;
+  translation: string;
+  chords?: string;
+  pianoNotes?: string;
+  startTime: number;
+  endTime: number;
+  order: number;
 }
 
 export default function VideoEditor({ video }: { video: any }) {
@@ -794,8 +795,8 @@ export default function VideoEditor({ video }: { video: any }) {
                                 </ul>
                               </div>
                             </div>
-                            </div>
                           )}
+                        </div>
                       </div>
 
                       {/* Piano Notes (Collapsible) */}
@@ -852,14 +853,13 @@ export default function VideoEditor({ video }: { video: any }) {
                         </div>
                       </div>
                     </div>
-                    </div>
-            );
+                  );
                 })
               )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div >
   );
 }
