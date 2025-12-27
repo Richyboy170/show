@@ -22,7 +22,10 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(node:*)",
-      "Bash(dir \"C:\\\\Users\\\\HP\\\\Desktop\\\\Special Code\\\\show\\\\thai-app\\\\app\\\\api\\\\videos\\\\[id]\" /b)"
+      "Bash(dir \"C:\\\\Users\\\\HP\\\\Desktop\\\\Special Code\\\\show\\\\thai-app\\\\app\\\\api\\\\videos\\\\[id]\" /b)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
