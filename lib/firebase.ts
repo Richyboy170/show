@@ -3,15 +3,20 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
 
 // Firebase Admin SDK initialization (server-side only)
-let app: App;
-let db: Firestore;
-let auth: Auth;
+let app: App | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
 
 function initializeFirebaseAdmin() {
+  // Return existing instance if already initialized
+  if (app && db && auth) {
+    return { app, db, auth };
+  }
+
   if (getApps().length === 0) {
     // Initialize with service account credentials
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    
+
     if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
       throw new Error(
         'Missing Firebase Admin SDK credentials. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.'
@@ -35,12 +40,31 @@ function initializeFirebaseAdmin() {
   return { app, db, auth };
 }
 
-// Initialize on first import
-const firebase = initializeFirebaseAdmin();
+// Lazy getters - initialize on first access
+function getFirebaseInstance() {
+  return initializeFirebaseAdmin();
+}
 
-export const firebaseAdmin = firebase.app;
-export const firestore = firebase.db;
-export const firebaseAuth = firebase.auth;
+export const firebaseAdmin = new Proxy({} as App, {
+  get: (target, prop) => {
+    const instance = getFirebaseInstance();
+    return (instance.app as any)[prop];
+  }
+});
+
+export const firestore = new Proxy({} as Firestore, {
+  get: (target, prop) => {
+    const instance = getFirebaseInstance();
+    return (instance.db as any)[prop];
+  }
+});
+
+export const firebaseAuth = new Proxy({} as Auth, {
+  get: (target, prop) => {
+    const instance = getFirebaseInstance();
+    return (instance.auth as any)[prop];
+  }
+});
 
 // Collection names
 export const COLLECTIONS = {
