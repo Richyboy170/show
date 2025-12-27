@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { getVideoById, getLyricsByVideoId } from "@/lib/firestore";
 import VideoEditor from "@/components/admin/VideoEditor";
 
+// Force dynamic rendering - authentication required
+export const dynamic = 'force-dynamic';
+
 export default async function EditVideoPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
 

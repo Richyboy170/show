@@ -5,6 +5,9 @@ import { Music, Heart } from "lucide-react";
 import Header from "@/components/Header";
 import ExpandableDescription from "@/components/ExpandableDescription";
 
+// Force dynamic rendering - don't prerender at build time
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const videos = await getVideos({
     orderBy: 'publishedAt',

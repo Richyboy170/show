@@ -10,6 +10,9 @@ import {
 import { firestore, COLLECTIONS } from "@/lib/firebase";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 
+// Force dynamic rendering - authentication required
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
 
