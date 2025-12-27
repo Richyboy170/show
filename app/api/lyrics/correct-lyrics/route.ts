@@ -8,9 +8,16 @@ import OpenAI from 'openai';
 
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization - only create when API is called
+let openaiClient: OpenAI | null = null;
+function getOpenAI() {
+    if (!openaiClient) {
+        openaiClient = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+    }
+    return openaiClient;
+}
 
 interface LyricCorrection {
     id: string;
@@ -63,6 +70,7 @@ export async function POST(request: Request) {
         const lyricsText = lyrics.map((l, i) => `[${i}] ${l.thaiText}`).join('\n');
 
         // Call OpenAI to correct lyrics
+        const openai = getOpenAI();
         const completion = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [
