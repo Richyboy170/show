@@ -120,22 +120,36 @@ export async function POST(request: Request) {
 
         let errorMessage = 'Failed to generate piano notes';
         let suggestion = '';
+        let details = error.message || 'Unknown error';
 
-        if (error.message?.includes('OpenAI API key')) {
-            errorMessage = 'OpenAI API key not configured';
-            suggestion = 'Please set OPENAI_API_KEY in your .env file.';
-        } else if (error.message?.includes('rate_limit')) {
-            errorMessage = 'OpenAI API rate limit exceeded';
-            suggestion = 'Please wait a few moments and try again.';
-        } else if (error.message?.includes('insufficient_quota')) {
-            errorMessage = 'OpenAI API quota exceeded';
-            suggestion = 'Please check your OpenAI billing settings.';
+        // Handle specific error types with user-friendly messages
+        if (error.message?.includes('copyright') || error.message?.includes('cannot create')) {
+            errorMessage = 'Copyright Restriction';
+            details = error.message;
+            suggestion = 'The AI cannot transcribe copyrighted music as it would reproduce protected melodies. This feature works best with original compositions or public domain music.';
+        } else if (error.message?.includes('All AI providers exhausted')) {
+            errorMessage = 'All AI providers out of quota';
+            details = 'All configured AI services have reached their usage limits.';
+            suggestion = 'Please add credits to your AI provider accounts:\n' +
+                        '• OpenAI: https://platform.openai.com/account/billing\n' +
+                        '• Try again in a few minutes if rate limited';
+        } else if (error.message?.includes('Invalid AI response')) {
+            errorMessage = 'AI response format error';
+            details = error.message;
+            suggestion = 'The AI could not generate valid piano notation for this song. This may happen with complex melodies or unfamiliar songs.';
+        } else if (error.message?.includes('quota') || error.message?.includes('429')) {
+            errorMessage = 'API quota exceeded';
+            details = 'Your AI provider accounts have run out of credits.';
+            suggestion = 'Please add credits at https://platform.openai.com/account/billing';
+        } else if (error.message?.includes('No AI providers')) {
+            errorMessage = 'No AI providers configured';
+            suggestion = 'Please set up at least one AI API key in your .env file (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)';
         }
 
         return NextResponse.json({
             error: errorMessage,
             suggestion,
-            details: error.message
+            details
         }, { status: 500 });
     }
 }

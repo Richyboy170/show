@@ -14,7 +14,7 @@ export const maxDuration = 300; // 5 minutes max for AI transcription
  * Tries YouTube captions first, falls back to Whisper AI transcription
  */
 export async function POST(request: Request) {
-    let jobId: string | null = null;
+    let jobId: string | undefined;
 
     try {
         const session = await getServerSession(authOptions);
@@ -37,8 +37,8 @@ export async function POST(request: Request) {
         jobId = clientJobId || `${videoId}-${Date.now()}`;
         console.log('[AUTO-IMPORT] Starting for video:', videoId, 'jobId:', jobId);
 
-        setProgress(jobId, 5, 'Initializing...');
-        addLog(jobId, 'Starting auto-import process');
+        setProgress(jobId!, 5, 'Initializing...');
+        addLog(jobId!, 'Starting auto-import process');
 
         // Get video details
         let video = await getVideoById(videoId);
@@ -53,12 +53,12 @@ export async function POST(request: Request) {
         }
 
         if (!video) {
-            setProgress(jobId, 0, 'Video not found');
+            setProgress(jobId!, 0, 'Video not found');
             return NextResponse.json({ error: 'Video not found' }, { status: 404 });
         }
 
-        setProgress(jobId, 10, 'Found video, preparing...');
-        addLog(jobId, `Video: ${video.title}`);
+        setProgress(jobId!, 10, 'Found video, preparing...');
+        addLog(jobId!, `Video: ${video.title}`);
 
         const youtubeId = video.youtubeId;
         let lyrics: any[] = [];
@@ -66,27 +66,27 @@ export async function POST(request: Request) {
         let errorDetails: any = {};
 
         // Try YouTube captions first (faster and more reliable)
-        setProgress(jobId, 15, 'Trying YouTube captions...');
-        addLog(jobId, 'Attempting to fetch YouTube captions');
+        setProgress(jobId!, 15, 'Trying YouTube captions...');
+        addLog(jobId!, 'Attempting to fetch YouTube captions');
 
         try {
             lyrics = await extractLyricsFromVideo(youtubeId);
-            addLog(jobId, `Found ${lyrics.length} caption segments`);
+            addLog(jobId!, `Found ${lyrics.length} caption segments`);
 
             if (lyrics.length === 0) {
                 throw new Error('No captions found');
             }
 
-            setProgress(jobId, 50, 'Successfully fetched captions');
+            setProgress(jobId!, 50, 'Successfully fetched captions');
         } catch (captionError: any) {
             console.log('[AUTO-IMPORT] YouTube captions failed:', captionError.message);
-            addLog(jobId, `Captions failed: ${captionError.message}`);
+            addLog(jobId!, `Captions failed: ${captionError.message}`);
             errorDetails.captions = captionError.message;
 
             // Check if Whisper is configured
             if (isWhisperConfigured()) {
-                setProgress(jobId, 25, 'Captions unavailable, trying AI transcription...');
-                addLog(jobId, 'Falling back to AI transcription');
+                setProgress(jobId!, 25, 'Captions unavailable, trying AI transcription...');
+                addLog(jobId!, 'Falling back to AI transcription');
 
                 try {
                     // Use Whisper AI transcription
@@ -98,11 +98,11 @@ export async function POST(request: Request) {
                     });
 
                     method = 'whisper';
-                    addLog(jobId, `AI transcription complete: ${lyrics.length} segments`);
-                    setProgress(jobId, 70, 'AI transcription complete');
+                    addLog(jobId!, `AI transcription complete: ${lyrics.length} segments`);
+                    setProgress(jobId!, 70, 'AI transcription complete');
                 } catch (whisperError: any) {
                     console.error('[AUTO-IMPORT] Whisper failed:', whisperError.message);
-                    addLog(jobId, `AI transcription failed: ${whisperError.message}`);
+                    addLog(jobId!, `AI transcription failed: ${whisperError.message}`);
                     errorDetails.whisper = whisperError.message;
 
                     // Check for specific quota errors
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
                 }
             } else {
                 // No Whisper configured, return error
-                addLog(jobId, 'AI transcription not configured');
+                addLog(jobId!, 'AI transcription not configured');
 
                 return NextResponse.json({
                     error: 'YouTube captions not available',
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
         }
 
         if (!lyrics || lyrics.length === 0) {
-            setProgress(jobId, 0, 'No lyrics found');
+            setProgress(jobId!, 0, 'No lyrics found');
             return NextResponse.json({
                 error: 'No lyrics could be extracted',
                 details: errorDetails
@@ -144,14 +144,14 @@ export async function POST(request: Request) {
         }
 
         // Delete existing lyrics
-        setProgress(jobId, 75, 'Clearing existing lyrics...');
-        addLog(jobId, 'Removing old lyrics');
+        setProgress(jobId!, 75, 'Clearing existing lyrics...');
+        addLog(jobId!, 'Removing old lyrics');
 
         await deleteAllLyricsForVideo(videoDocId);
 
         // Save new lyrics
-        setProgress(jobId, 80, 'Saving new lyrics...');
-        addLog(jobId, `Saving ${lyrics.length} lyric lines`);
+        setProgress(jobId!, 80, 'Saving new lyrics...');
+        addLog(jobId!, `Saving ${lyrics.length} lyric lines`);
 
         for (let i = 0; i < lyrics.length; i++) {
             const lyric = lyrics[i];
@@ -168,18 +168,18 @@ export async function POST(request: Request) {
             // Update progress as we save
             const saveProgress = 80 + Math.round((i / lyrics.length) * 15);
             if (i % 5 === 0) {
-                setProgress(jobId, saveProgress, `Saved ${i + 1}/${lyrics.length} lyrics...`);
+                setProgress(jobId!, saveProgress, `Saved ${i + 1}/${lyrics.length} lyrics...`);
             }
         }
 
-        setProgress(jobId, 100, 'Complete!');
-        addLog(jobId, `Successfully imported ${lyrics.length} lyrics using ${method === 'whisper' ? 'AI transcription' : 'YouTube captions'}`);
+        setProgress(jobId!, 100, 'Complete!');
+        addLog(jobId!, `Successfully imported ${lyrics.length} lyrics using ${method === 'whisper' ? 'AI transcription' : 'YouTube captions'}`);
 
         console.log(`[AUTO-IMPORT] Successfully imported ${lyrics.length} lyrics using ${method}`);
 
         // Clear progress after a delay
         setTimeout(() => {
-            if (jobId) clearProgress(jobId);
+            if (jobId) clearProgress(jobId!);
         }, 30000);
 
         return NextResponse.json({
@@ -193,8 +193,8 @@ export async function POST(request: Request) {
         console.error('[AUTO-IMPORT] Error:', error);
 
         if (jobId) {
-            setProgress(jobId, 0, 'Error occurred');
-            addLog(jobId, `Error: ${error.message}`);
+            setProgress(jobId!, 0, 'Error occurred');
+            addLog(jobId!, `Error: ${error.message}`);
         }
 
         // Check for quota errors

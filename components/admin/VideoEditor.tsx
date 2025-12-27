@@ -571,6 +571,24 @@ export default function VideoEditor({ video }: { video: any }) {
                 </div>
               </div>
 
+              {/* Export SRT Button */}
+              {lyrics.length > 0 && (
+                <div className="mt-3 pt-3 border-t-2 border-[#4ECDC4]/30">
+                  <a
+                    href={`/api/videos/${video.id}/export-srt`}
+                    download
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-gradient-to-r from-[#9B59B6] to-[#8E44AD] text-white rounded-lg hover:from-[#8E44AD] hover:to-[#9B59B6] transition-all shadow-lg font-bold transform hover:scale-105 text-sm"
+                    title="Download SRT subtitle file for YouTube"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export SRT Subtitles
+                  </a>
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    Download subtitle file to upload to YouTube
+                  </p>
+                </div>
+              )}
+
               {/* Progress Bar and Logs */}
               {autoImporting && (
                 <div className="w-full space-y-3">

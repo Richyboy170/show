@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { generateWithFallback, hasMusicProvider, getConfiguredProviders } from './multi-provider-music';
 
 export interface ChordSuggestion {
     lyricId: string;
@@ -25,16 +25,22 @@ export async function generateChordsForLyrics(
     songTitle: string,
     progressCallback?: (progress: number, message: string) => void
 ): Promise<ChordSuggestion[]> {
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-        throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY in your .env file.');
+    // Check if any AI providers are configured
+    if (!hasMusicProvider()) {
+        throw new Error(
+            'No AI providers configured. Please add at least one API key to your .env file:\n' +
+            '- OPENAI_API_KEY (recommended)\n' +
+            '- ANTHROPIC_API_KEY\n' +
+            '- GEMINI_API_KEY\n' +
+            '- GROQ_API_KEY (FREE!)'
+        );
     }
 
     progressCallback?.(10, 'Connecting to AI...');
     console.log('[CHORD-GENERATOR] Starting chord generation for:', songTitle);
 
-    const openai = new OpenAI({ apiKey });
+    const configuredProviders = getConfiguredProviders();
+    console.log('[CHORD-GENERATOR] Available AI providers:', configuredProviders);
 
 
 
@@ -97,17 +103,15 @@ Include all ${lyrics.length} lines. Use "high" if you recognize the song, "mediu
     progressCallback?.(50, 'Generating chord suggestions...');
 
     try {
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.3, // Lower temperature for more consistent results
-            max_tokens: 4000 // Increased for longer chord progressions
-        });
+        // Use multi-provider system with automatic fallback
+        // Use preferCheap=true for chords since they're simpler than piano notes
+        const aiResponse = await generateWithFallback(
+            systemPrompt,
+            userPrompt,
+            progressCallback,
+            true // preferCheap = true (chords are simpler, can use cheaper models)
+        );
 
-        const aiResponse = response.choices[0]?.message?.content || '';
         console.log('[CHORD-GENERATOR] AI Response length:', aiResponse.length);
 
         progressCallback?.(80, 'Processing suggestions...');
@@ -152,7 +156,22 @@ Include all ${lyrics.length} lines. Use "high" if you recognize the song, "mediu
         return suggestions;
     } catch (error: any) {
         console.error('[CHORD-GENERATOR] Error:', error);
-        throw new Error(`Failed to generate chords: ${error.message}`);
+
+        // Provide helpful error messages
+        let errorMessage = 'Failed to generate chords';
+        let suggestion = '';
+
+        if (error.message?.includes('No AI providers')) {
+            errorMessage = 'No AI providers configured';
+            suggestion = 'Please add at least one API key (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or GROQ_API_KEY) to your .env file.';
+        } else if (error.message?.includes('All') && error.message?.includes('failed')) {
+            errorMessage = 'All AI providers failed';
+            suggestion = 'All configured AI providers have reached their limits or have errors. Please check your API keys, billing status, or add more providers.';
+        } else {
+            errorMessage = error.message || 'Unknown error occurred';
+        }
+
+        throw new Error(`${errorMessage}${suggestion ? '. ' + suggestion : ''}`);
     }
 }
 

@@ -56,22 +56,25 @@ K:C
 ${notation}`;
             }
 
-            // Render with spacing configuration
+            // Detect if this is a complex multi-voice arrangement
+            const isComplexArrangement = abcString.includes('V:1') && abcString.includes('V:2');
+
+            // Render with spacing configuration optimized for complexity
             try {
                 const visualObj = abcjs.default.renderAbc(containerRef.current, abcString, {
                     responsive: 'resize',
-                    staffwidth: 400,
+                    staffwidth: isComplexArrangement ? 600 : 400, // Wider for multi-voice
                     paddingtop: 0,
                     paddingbottom: 0,
                     paddingleft: 5,
                     paddingright: 5,
-                    scale: 0.6,
+                    scale: isComplexArrangement ? 0.7 : 0.6, // Slightly larger for readability
                     add_classes: true,
                     print: false,
                     wrap: {
-                        minSpacing: 2.0,
-                        maxSpacing: 4.0,
-                        preferredMeasuresPerLine: 8
+                        minSpacing: isComplexArrangement ? 1.5 : 2.0, // Tighter for complex music
+                        maxSpacing: isComplexArrangement ? 3.0 : 4.0,
+                        preferredMeasuresPerLine: isComplexArrangement ? 4 : 8 // Fewer measures per line for clarity
                     }
                 });
 
